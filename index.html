@@ -1,0 +1,36 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Диагностика состояния</title>
+  <style>
+    body { font-family: Georgia, serif; background:#f7f8fb; margin:0; padding:40px 20px; color:#1f2937; }
+    .wrap { max-width:700px; margin:0 auto; }
+    .hero { background:white; border-radius:20px; padding:40px; box-shadow:0 10px 30px rgba(0,0,0,.08); }
+    h1 { font-size:38px; margin-bottom:10px; }
+    p { font-size:18px; line-height:1.6; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:30px; }
+    .card { background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 14px rgba(0,0,0,.06); cursor:pointer; transition:.2s; }
+    .card:hover { transform:translateY(-2px); }
+    .card h3 { margin:0 0 8px; }
+    .btn { margin-top:30px; display:inline-block; background:#1e3a8a; color:white; padding:14px 24px; border-radius:12px; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>Что вас беспокоит сейчас?</h1>
+      <p>Выберите состояние, и я помогу определить, с чего лучше начать терапию или сеанс гипноза.</p>
+      <div class="grid">
+        <div class="card"><h3>Тревога</h3><p>Постоянное напряжение и навязчивые мысли</p></div>
+        <div class="card"><h3>Страх</h3><p>Фобии, страх общения, перемен, выступлений</p></div>
+        <div class="card"><h3>Выгорание</h3><p>Усталость, отсутствие сил, эмоциональная пустота</p></div>
+        <div class="card"><h3>Отношения</h3><p>Повторяющиеся конфликты и страх близости</p></div>
+      </div>
+      <a class="btn" href="#">Записаться на консультацию</a>
+    </div>
+  </div>
+</body>
+</html>
+
