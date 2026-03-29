@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {font-family:sans-serif;padding:20px;}
+button {display:block;width:100%;padding:15px;margin-top:10px;}
+</style>
+</head>
+
+<body>
+
+<h2 id="title">Тест диагностики</h2>
+<div id="content"></div>
+
+<script>
+
+let step = 0;
+let score = 0;
+
+const questions = [
+"Как часто тревожные мысли?",
+"Есть ли напряжение?",
+"Сложно расслабиться?"
+];
+
+function start(){
+next();
+}
+
+function next(){
+if(step >= questions.length){
+showResult();
+return;
+}
+
+document.getElementById("title").innerText =
+`Вопрос ${step+1} из ${questions.length}`;
+
+document.getElementById("content").innerHTML = `
+<p>${questions[step]}</p>
+
+<button onclick="answer(2)">Часто</button>
+<button onclick="answer(1)">Иногда</button>
+<button onclick="answer(0)">Редко</button>
+`;
+}
+
+function answer(v){
+score += v;
+step++;
+next();
+}
+
+function showResult(){
+document.getElementById("title").innerText = "Результат";
+
+document.getElementById("content").innerHTML = `
+<p>Баллы: ${score}</p>
+
+<button onclick="send()">Отправить</button>
+`;
+}
+
+function send(){
+alert("Данные отправлены:\n" + JSON.stringify({
+type:"diagnostic",
+score:score
+}));
+}
+
+start();
+
+</script>
+
+</body>
+</html>
