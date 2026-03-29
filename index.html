@@ -14,7 +14,7 @@ body { font-family: -apple-system, sans-serif; background:#f5f7fb; margin:0; pad
 .active { display:block;}
 .card { background:white; padding:14px; border-radius:12px; margin-top:10px; border:1px solid #eee; cursor:pointer;}
 .card:hover { background:#eef2ff;}
-.btn { display:block; margin-top:20px; text-align:center; background:#1e3a8a; color:white; padding:14px; border-radius:12px; text-decoration:none;}
+.btn { display:block; margin-top:14px; text-align:center; background:#1e3a8a; color:white; padding:14px; border-radius:12px; text-decoration:none;}
 .result-box { background:white; padding:16px; border-radius:12px; margin-top:12px; line-height:1.6;}
 textarea { width:100%; margin-top:10px; padding:10px; border-radius:10px; border:1px solid #ccc;}
 </style>
@@ -32,14 +32,17 @@ textarea { width:100%; margin-top:10px; padding:10px; border-radius:10px; border
 <!-- RESULT -->
 <div id="result" class="screen">
   <h2>Ваш результат</h2>
+
   <div id="resultText" class="result-box"></div>
 
-  <a id="ctaBtn" class="btn" target="_blank">
-    Записаться на консультацию
+  <!-- СНАЧАЛА ПРОБОВАТЬ -->
+  <a class="btn" href="?mode=audio">
+    🎧 Попробовать практику
   </a>
 
-  <a class="btn" href="?mode=audio">
-    Пройти практику
+  <!-- ПОТОМ ЗАПИСЬ -->
+  <a id="ctaBtn" class="btn" target="_blank">
+    Записаться на консультацию
   </a>
 </div>
 
@@ -48,15 +51,9 @@ textarea { width:100%; margin-top:10px; padding:10px; border-radius:10px; border
   <h2>Практика расслабления</h2>
 
   <div class="result-box">
-    <b>Что это:</b><br><br>
-    Короткая практика для снижения напряжения.<br><br>
-
-    <b>Как выполнять:</b><br>
-    1. Удобно расположитесь<br>
-    2. Наденьте наушники<br>
-    3. Просто слушайте<br><br>
-
-    ⚠️ Не анализируйте
+    Это короткая практика, которая помогает снизить напряжение.<br><br>
+    Просто включите и слушайте.<br><br>
+    ⚠️ Не анализируйте — просто наблюдайте
   </div>
 
   <audio controls style="width:100%; margin-top:15px;">
@@ -98,7 +95,6 @@ textarea { width:100%; margin-top:10px; padding:10px; border-radius:10px; border
 <div id="supervision" class="screen">
   <h2>Супервизия</h2>
 
-  <h3>Что происходит?</h3>
   <div class="card" onclick="setSup('Сложный клиент')">Сложный клиент</div>
   <div class="card" onclick="setSup('Нет прогресса')">Нет прогресса</div>
   <div class="card" onclick="setSup('Не понимаю клиента')">Не понимаю клиента</div>
@@ -127,13 +123,11 @@ textarea { width:100%; margin-top:10px; padding:10px; border-radius:10px; border
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-const user = tg.initDataUnsafe?.user;
-const name = user?.first_name || "Вы";
-
 const params = new URLSearchParams(window.location.search);
 const mode = params.get("mode");
 
 let answersData = {};
+let step = 0;
 
 const questions = [
   { key:"main", title:"Что беспокоит?", options:["Тревога","Страх","Выгорание","Отношения"] },
@@ -141,8 +135,6 @@ const questions = [
   { key:"trigger", title:"Когда усиливается?", options:["Один","Перед событиями","В общении","Постоянно"] },
   { key:"reaction", title:"Как реагируете?", options:["Контроль","Избегаю","Замыкаюсь","Анализирую"] }
 ];
-
-let step = 0;
 
 function show(screen){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -158,6 +150,7 @@ function startTest(){
 function showQuestion(){
   const q=questions[step];
   document.getElementById("qTitle").innerText=q.title;
+
   const answers=document.getElementById("answers");
   answers.innerHTML="";
 
@@ -179,18 +172,11 @@ function showQuestion(){
 
 function showResult(){
   const text = `
-<b>${name}, по вашим ответам:</b><br><br>
-
-Проблема: <b>${answersData.main}</b><br><br>
-
-Формируется реакция на триггеры (${answersData.trigger})<br><br>
-
-Проявляется как:<br>
-• ${answersData.symptom}<br><br>
-
-⚠️ Без работы усиливается<br><br>
-
-💡 Рекомендуется работа с подсознанием
+<b>Результат:</b><br><br>
+Проблема: ${answersData.main}<br>
+Триггер: ${answersData.trigger}<br><br>
+⚠️ состояние усиливается без проработки<br><br>
+💡 можно проработать через гипноз
 `;
 
   document.getElementById("resultText").innerHTML=text;
@@ -216,6 +202,7 @@ let fastProblem="", fastDetail="";
 
 function setFast(val){
   fastProblem=val;
+  show("fast");
   document.getElementById("fastStep2").style.display="block";
 }
 
@@ -226,7 +213,6 @@ function setFastDetail(val){
 
 document.addEventListener("input",()=>{
   const text=document.getElementById("fastText")?.value||"";
-
   const msg=encodeURIComponent(
 `Добрый день!
 Хочу записаться.
@@ -237,16 +223,16 @@ document.addEventListener("input",()=>{
 Описание:
 ${text}`
   );
-
   document.getElementById("fastBtn").href =
     `https://t.me/AndreyAstafiev?text=${msg}`;
 });
 
-/* SUPERVISION */
+/* SUP */
 let supType="", supExp="";
 
 function setSup(val){
   supType=val;
+  show("supervision");
   document.getElementById("supStep2").style.display="block";
 }
 
@@ -257,10 +243,9 @@ function setSupExp(val){
 
 document.addEventListener("input",()=>{
   const text=document.getElementById("supText")?.value||"";
-
   const msg=encodeURIComponent(
 `Добрый день!
-Запрос на супервизию.
+Супервизия.
 
 Тип: ${supType}
 Опыт: ${supExp}
@@ -268,7 +253,6 @@ document.addEventListener("input",()=>{
 Кейс:
 ${text}`
   );
-
   document.getElementById("supBtn").href =
     `https://t.me/AndreyAstafiev?text=${msg}`;
 });
