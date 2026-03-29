@@ -6,7 +6,7 @@
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<title>Диагностика состояния</title>
+<title>Психо WebApp</title>
 
 <style>
 body {
@@ -21,13 +21,8 @@ body {
   margin:0 auto;
 }
 
-.screen {
-  display:none;
-}
-
-.active {
-  display:block;
-}
+.screen { display:none; }
+.active { display:block; }
 
 .card {
   background:white;
@@ -36,12 +31,9 @@ body {
   margin-top:10px;
   border:1px solid #eee;
   cursor:pointer;
-  transition:.2s;
 }
 
-.card:hover {
-  background:#eef2ff;
-}
+.card:hover { background:#eef2ff; }
 
 .btn {
   display:block;
@@ -52,7 +44,6 @@ body {
   padding:14px;
   border-radius:12px;
   text-decoration:none;
-  font-weight:500;
 }
 
 .result-box {
@@ -69,9 +60,18 @@ body {
 
 <div class="container">
 
-<!-- STEP 1 -->
-<div id="step1" class="screen active">
-  <h2 id="title">Что вас беспокоит?</h2>
+<!-- МЕНЮ -->
+<div id="menu" class="screen active">
+  <h2 id="hello">Что вы хотите сейчас?</h2>
+
+  <div class="card" onclick="goTo('diagnostic')">Пройти диагностику</div>
+  <div class="card" onclick="goTo('fast')">Решить проблему</div>
+  <div class="card" onclick="goTo('supervision')">Я специалист (супервизия)</div>
+</div>
+
+<!-- ТЕСТ -->
+<div id="step1" class="screen">
+  <h2>Что вас беспокоит?</h2>
 
   <div class="card" onclick="step1('anxiety')">Тревога</div>
   <div class="card" onclick="step1('fear')">Страх</div>
@@ -79,20 +79,51 @@ body {
   <div class="card" onclick="step1('relations')">Отношения</div>
 </div>
 
-<!-- STEP 2 -->
 <div id="step2" class="screen">
   <h2>Уточните состояние</h2>
   <div id="options"></div>
 </div>
 
-<!-- RESULT -->
+<!-- РЕЗУЛЬТАТ -->
 <div id="result" class="screen">
   <h2>Ваш результат</h2>
 
   <div class="result-box" id="resultText"></div>
 
-  <a class="btn" href="https://t.me/AndreyAstafiev?text=Хочу%20начать%20работу">
+  <!-- АУДИО -->
+  <audio controls style="width:100%; margin-top:15px;">
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
+  </audio>
+
+  <a class="btn" href="https://t.me/AndreyAstafiev">
     Начать работу с этим состоянием
+  </a>
+</div>
+
+<!-- БЫСТРАЯ ЗАПИСЬ -->
+<div id="fast" class="screen">
+  <h2>С чем вы хотите поработать?</h2>
+
+  <div class="card">Тревога</div>
+  <div class="card">Страх</div>
+  <div class="card">Отношения</div>
+
+  <a class="btn" href="https://t.me/AndreyAstafiev">
+    Перейти к записи
+  </a>
+</div>
+
+<!-- СУПЕРВИЗИЯ -->
+<div id="supervision" class="screen">
+  <h2>Супервизия</h2>
+
+  <p>Разбор сложных кейсов для специалистов</p>
+
+  <div class="card">Разобрать кейс</div>
+  <div class="card">Групповая супервизия</div>
+
+  <a class="btn" href="https://t.me/AndreyAstafiev">
+    Отправить запрос
   </a>
 </div>
 
@@ -103,9 +134,10 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 
 const user = tg.initDataUnsafe?.user;
+
 if (user) {
-  document.getElementById("title").innerText =
-    user.first_name + ", что вас беспокоит?";
+  document.getElementById("hello").innerText =
+    user.first_name + ", что вы хотите сейчас?";
 }
 
 function show(screen) {
@@ -113,45 +145,32 @@ function show(screen) {
   document.getElementById(screen).classList.add('active');
 }
 
-let mainChoice = "";
+function goTo(type) {
+  if (type === 'diagnostic') show('step1');
+  if (type === 'fast') show('fast');
+  if (type === 'supervision') show('supervision');
+}
 
 function step1(type) {
-  mainChoice = type;
   const options = document.getElementById("options");
   options.innerHTML = "";
 
   let variants = [];
 
   if (type === 'anxiety') {
-    variants = [
-      "Постоянные мысли и накручивание",
-      "Тревога без причины",
-      "Физическое напряжение"
-    ];
+    variants = ["Навязчивые мысли","Тревога без причины","Напряжение"];
   }
 
   if (type === 'fear') {
-    variants = [
-      "Страх общения",
-      "Страх выступлений",
-      "Конкретные фобии"
-    ];
+    variants = ["Соц страх","Выступления","Фобии"];
   }
 
   if (type === 'burnout') {
-    variants = [
-      "Нет энергии",
-      "Нет мотивации",
-      "Раздражение и усталость"
-    ];
+    variants = ["Нет энергии","Нет мотивации","Раздражение"];
   }
 
   if (type === 'relations') {
-    variants = [
-      "Конфликты",
-      "Страх близости",
-      "Зависимость от партнера"
-    ];
+    variants = ["Конфликты","Страх близости","Зависимость"];
   }
 
   variants.forEach(v => {
@@ -166,78 +185,13 @@ function step1(type) {
 }
 
 function showResult(type, detail) {
-  const name = user?.first_name || "Вы";
-  let score = Math.floor(Math.random() * 20) + 70;
-
-  let title = "";
-  let text = "";
-
-  if (type === 'anxiety') {
-    title = "Повышенный уровень тревожности";
-    text = `
-📊 Уровень выраженности: <b>${score}%</b><br><br>
-
-Вы склонны к постоянному внутреннему напряжению и контролю мыслей.<br><br>
-
-Это состояние закрепляется на уровне подсознания и усиливается со временем.<br><br>
-
-⚠️ Если это не проработать, тревога может перейти в хроническую форму и начать влиять на здоровье.<br><br>
-
-💡 Гипнотерапия позволяет быстро снизить тревожность и убрать источник напряжения.
-`;
-  }
-
-  if (type === 'fear') {
-    title = "Закреплённый страх";
-    text = `
-📊 Уровень выраженности: <b>${score}%</b><br><br>
-
-Ваш страх стал автоматической реакцией.<br><br>
-
-Это не просто мысль, а закреплённый паттерн поведения.<br><br>
-
-⚠️ Со временем страх начинает ограничивать жизнь.<br><br>
-
-💡 Через гипноз можно переписать реакцию и убрать страх.
-`;
-  }
-
-  if (type === 'burnout') {
-    title = "Эмоциональное выгорание";
-    text = `
-📊 Уровень выраженности: <b>${score}%</b><br><br>
-
-У вас сниженный уровень энергии и мотивации.<br><br>
-
-Психика находится в защитном режиме.<br><br>
-
-⚠️ Это может перейти в апатию и депрессивные состояния.<br><br>
-
-💡 Глубокая терапия помогает восстановить ресурс.
-`;
-  }
-
-  if (type === 'relations') {
-    title = "Повторяющиеся сценарии";
-    text = `
-📊 Уровень выраженности: <b>${score}%</b><br><br>
-
-Вы сталкиваетесь с повторяющимися проблемами в отношениях.<br><br>
-
-Это глубинные установки.<br><br>
-
-⚠️ Без проработки сценарий будет повторяться.<br><br>
-
-💡 Гипнотерапия помогает изменить паттерны поведения.
-`;
-  }
+  let score = Math.floor(Math.random()*20)+70;
 
   document.getElementById("resultText").innerHTML =
-    `<b>${name}, ваш результат:</b><br><br>
-     <b>${title}</b><br><br>
-     ${text}
-     <br><br>
-     👉 Вы выбрали: <b>${detail}</b>`;
+    `<b>Результат:</b><br><br>
+     Уровень: ${score}%<br><br>
+     Вы выбрали: ${detail}<br><br>
+     Это состояние можно эффективно проработать через гипнотерапию.`;
 
   show("result");
 }
