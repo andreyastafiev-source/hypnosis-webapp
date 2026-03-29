@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
@@ -32,19 +33,13 @@ button {width:100%;padding:14px;margin-top:10px;border-radius:12px;cursor:pointe
 
 <!-- ===== АУДИО ===== -->
 <div id="audio" class="card">
-<h2>Снижение тревоги и напряжения</h2>
+<h2>Снижение тревоги</h2>
 
 <p>
-Это аудиопрактика для работы с состоянием.
-
-Когда использовать:
-— тревога  
-— перегрузка  
+Используйте:
+— при тревоге  
 — перед сном  
-
-Как:
-— в наушниках  
-— спокойно, без отвлечений  
+— при перегрузке  
 </p>
 
 <audio controls>
@@ -54,14 +49,14 @@ button {width:100%;padding:14px;margin-top:10px;border-radius:12px;cursor:pointe
 <button onclick="sendAudio()">Хочу консультацию</button>
 </div>
 
-<!-- ===== РАЗБОР ===== -->
+<!-- ===== FAST ===== -->
 <div id="fast" class="card">
 <div class="progress" id="fProg"></div>
 <h3 id="fQ"></h3>
 <div id="fA"></div>
 </div>
 
-<!-- ===== СУПЕРВИЗИЯ ===== -->
+<!-- ===== SUP ===== -->
 <div id="sup" class="card">
 <div class="progress" id="sProg"></div>
 <h3 id="sQ"></h3>
@@ -69,6 +64,7 @@ button {width:100%;padding:14px;margin-top:10px;border-radius:12px;cursor:pointe
 </div>
 
 <script>
+
 const tg = window.Telegram?.WebApp;
 if(tg) tg.expand();
 
@@ -82,13 +78,13 @@ document.getElementById(id).style.display="block";
 let di=0, score=0;
 
 const dq=[
-"Как часто вы прокручиваете одни и те же мысли?",
-"Есть ли напряжение в теле без причины?",
-"Сложно ли остановить внутренний диалог?",
-"Возникают ли тревожные сценарии?",
-"Есть ли ощущение потери контроля?",
-"Есть ли проблемы со сном?",
-"Сложно ли расслабиться?"
+"Как часто вы прокручиваете мысли?",
+"Есть ли напряжение в теле?",
+"Сложно остановить мысли?",
+"Есть тревожные сценарии?",
+"Чувство потери контроля?",
+"Проблемы со сном?",
+"Трудно расслабиться?"
 ];
 
 function startD(){
@@ -118,44 +114,47 @@ go("dResult");
 let text="";
 
 if(score>=15){
-text=`Высокий уровень тревожного паттерна.
+text=`Высокий уровень тревоги.
 
-Состояние уже закрепилось и запускается автоматически.
-
-Проявления:
-— постоянные мысли  
-— напряжение  
-— потеря контроля  
-
-Рекомендация:
-работа с подсознательной реакцией + консультация`;
+Реакция закреплена и запускается автоматически.
+Рекомендуется работа с состоянием и консультация.`;
 }
 else if(score>=8){
 text=`Средний уровень тревоги.
 
-Паттерн формируется, но ещё гибкий.
-
-Рекомендация:
-можно быстро скорректировать состояние`;
+Состояние можно скорректировать достаточно быстро.`;
 }
 else{
 text=`Низкий уровень тревоги.
 
-Есть отдельные триггеры, но без закрепления.`;
+Есть локальные реакции без закрепления.`;
 }
 
 dText.innerText=text;
 }
 
+/* ===== ОТПРАВКА ===== */
+
 function sendDiag(){
-tg.sendData(JSON.stringify({type:"diagnostic",score}));
-setTimeout(()=>tg.close(),500);
+sendData({type:"diagnostic",score});
 }
 
-/* ===== АУДИО ===== */
 function sendAudio(){
-tg.sendData(JSON.stringify({type:"audio"}));
-setTimeout(()=>tg.close(),500);
+sendData({type:"audio"});
+}
+
+function sendData(payload){
+if(tg){
+tg.sendData(JSON.stringify(payload));
+
+// важно — задержка!
+setTimeout(()=>{
+tg.close();
+},1500);
+
+} else {
+alert("НЕ WebApp");
+}
 }
 
 /* ===== FAST ===== */
@@ -179,8 +178,7 @@ function ansF(v){
 fd[fq[fi].q]=v;fi++;
 if(fi<fq.length){nextF();}
 else{
-tg.sendData(JSON.stringify({type:"fast",data:fd}));
-setTimeout(()=>tg.close(),500);
+sendData({type:"fast",data:fd});
 }
 }
 
@@ -205,8 +203,7 @@ function ansS(v){
 sd[sq[si].q]=v;si++;
 if(si<sq.length){nextS();}
 else{
-tg.sendData(JSON.stringify({type:"supervision",data:sd}));
-setTimeout(()=>tg.close(),500);
+sendData({type:"supervision",data:sd});
 }
 }
 
@@ -217,6 +214,7 @@ if(m==="diagnostic"){go("diagnostic");startD();}
 if(m==="audio"){go("audio");}
 if(m==="fast"){go("fast");startF();}
 if(m==="supervision"){go("sup");startS();}
+
 </script>
 
 </body>
