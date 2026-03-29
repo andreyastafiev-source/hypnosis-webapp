@@ -5,134 +5,173 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body { font-family: sans-serif; background:#f6f7fb; padding:20px; }
-.card { display:none; background:#fff; padding:20px; border-radius:16px; }
-button { width:100%; padding:14px; margin-top:10px; }
+body{font-family:sans-serif;background:#f6f7fb;padding:20px;}
+.card{display:none;background:#fff;padding:20px;border-radius:16px;}
+button{width:100%;padding:14px;margin-top:10px;border-radius:12px;}
+.progress{color:#666;margin-bottom:10px;}
 </style>
 </head>
 
 <body>
 
-<!-- DIAGNOSTIC -->
 <div id="diagnostic" class="card">
-<h2 id="qTitle"></h2>
-<div id="answers"></div>
+<div class="progress" id="dProg"></div>
+<h2 id="dQ"></h2>
+<div id="dA"></div>
 </div>
 
-<!-- RESULT -->
-<div id="result" class="card">
-<h2>Результат</h2>
-<p id="resultText"></p>
+<div id="dResult" class="card">
+<h2>Анализ состояния</h2>
+<p id="dText"></p>
 <button onclick="sendDiag()">Записаться</button>
+<button onclick="show('audio')">Пройти гипноз</button>
 </div>
 
-<!-- AUDIO -->
 <div id="audio" class="card">
-<h2>Практика</h2>
+<h2>Гипноз</h2>
+<p>
+Это метод работы с подсознательной реакцией.
+Используйте при тревоге, перед сном, после стресса.
+</p>
 <audio controls>
 <source src="https://github.com/andreyastafiev-source/hypnosis-webapp/raw/main/Hipno_2-001.mp3">
 </audio>
 </div>
 
-<!-- FAST -->
 <div id="fast" class="card">
-<h2>Опишите проблему</h2>
-<textarea id="fastText"></textarea>
-<button onclick="sendFast()">Отправить</button>
+<div class="progress" id="fProg"></div>
+<h3 id="fQ"></h3>
+<div id="fA"></div>
 </div>
 
-<!-- SUP -->
-<div id="supervision" class="card">
-<h2>Супервизия</h2>
-<textarea id="supText"></textarea>
-<button onclick="sendSup()">Отправить</button>
+<div id="sup" class="card">
+<div class="progress" id="sProg"></div>
+<h3 id="sQ"></h3>
+<div id="sA"></div>
 </div>
 
 <script>
 
 /* NAV */
-
 function show(id){
 document.querySelectorAll('.card').forEach(el=>el.style.display="none");
 document.getElementById(id).style.display="block";
 }
 
-/* TEST */
+/* DIAGNOSTIC */
+let di=0,score=0;
 
-let q=0, score=0;
-
-const qs=[
-"Как часто мысли крутятся?",
-"Есть ли напряжение?",
-"Сложно расслабиться?",
+const dq=[
+"Как часто вы прокручиваете мысли?",
+"Есть ли напряжение в теле?",
+"Сложно остановить мысли?",
 "Есть тревожные сценарии?",
-"Есть ощущение потери контроля?"
+"Чувство потери контроля?",
+"Проблемы со сном?",
+"Трудно расслабиться?"
 ];
 
-function startTest(){
-q=0; score=0; next();
+function startD(){di=0;score=0;nextD();}
+
+function nextD(){
+dProg.innerText=`${di+1}/7`;
+dQ.innerText=dq[di];
+dA.innerHTML=`
+<button onclick="ansD(3)">Почти всегда</button>
+<button onclick="ansD(2)">Часто</button>
+<button onclick="ansD(1)">Иногда</button>
+<button onclick="ansD(0)">Редко</button>`;
 }
 
-function next(){
-document.getElementById("qTitle").innerText=qs[q];
-document.getElementById("answers").innerHTML=`
-<button onclick="ans(2)">Часто</button>
-<button onclick="ans(1)">Иногда</button>
-<button onclick="ans(0)">Редко</button>
-`;
+function ansD(v){
+score+=v;di++;
+if(di<dq.length){nextD();}
+else{finishD();}
 }
 
-function ans(v){
-score+=v; q++;
-if(q<qs.length){next();}
-else{result();}
-}
-
-function result(){
-show("result");
+function finishD(){
+show("dResult");
 
 let t="";
-if(score>=8){t="Сильная тревога — нужна проработка";}
-else if(score>=4){t="Средний уровень";}
-else{t="Низкий уровень";}
-
-document.getElementById("resultText").innerText=t;
+if(score>=15){
+t=`Сформирован устойчивый тревожный паттерн.
+Состояние запускается автоматически.
+Требуется работа с подсознанием.`;
+}
+else if(score>=8){
+t=`Формирующийся паттерн.
+Можно быстро скорректировать.`;
+}
+else{
+t=`Локальные реакции без закрепления.`;
 }
 
-/* SEND */
+dText.innerText=t;
+}
 
 function sendDiag(){
-window.open("https://t.me/hypnosis_therapy_bot?text=Хочу консультацию");
+window.open("https://t.me/hypnosis_therapy_bot?text="+encodeURIComponent("Диагностика: "+score));
 }
 
-function sendFast(){
-window.open("https://t.me/hypnosis_therapy_bot?text="+fastText.value);
+/* FAST */
+let fi=0,fd={};
+
+const fq=[
+{q:"Тип проблемы",a:["Тревога","Страх","Отношения"]},
+{q:"Длительность",a:["Недавно","Месяцы","Годы"]},
+{q:"Попытки",a:["Нет","Самостоятельно","Терапия"]},
+{q:"Интенсивность",a:["Низкая","Средняя","Высокая"]}
+];
+
+function startF(){fi=0;fd={};nextF();}
+
+function nextF(){
+fProg.innerText=`${fi+1}/4`;
+fQ.innerText=fq[fi].q;
+fA.innerHTML=fq[fi].a.map(a=>`<button onclick="ansF('${a}')">${a}</button>`).join("");
 }
 
-function sendSup(){
-window.open("https://t.me/hypnosis_therapy_bot?text="+supText.value);
+function ansF(v){
+fd[fq[fi].q]=v;fi++;
+if(fi<fq.length){nextF();}
+else{
+window.open("https://t.me/hypnosis_therapy_bot?text="+encodeURIComponent(JSON.stringify(fd)));
+}
+}
+
+/* SUP */
+let si=0,sd={};
+
+const sq=[
+{q:"Метод",a:["CBT","Гипноз","Психоанализ"]},
+{q:"Кейс",a:["Тревога","Травма","Поведение"]},
+{q:"Проблема",a:["Нет динамики","Сопротивление","Неясно"]},
+{q:"Гипотеза",a:["Неверная стратегия","Глубже причина","Не понимаю"]}
+];
+
+function startS(){si=0;sd={};nextS();}
+
+function nextS(){
+sProg.innerText=`${si+1}/4`;
+sQ.innerText=sq[si].q;
+sA.innerHTML=sq[si].a.map(a=>`<button onclick="ansS('${a}')">${a}</button>`).join("");
+}
+
+function ansS(v){
+sd[sq[si].q]=v;si++;
+if(si<sq.length){nextS();}
+else{
+window.open("https://t.me/hypnosis_therapy_bot?text="+encodeURIComponent(JSON.stringify(sd)));
+}
 }
 
 /* MODE */
+const m=new URLSearchParams(location.search).get("mode");
 
-const mode=new URLSearchParams(window.location.search).get("mode");
-
-if(mode==="diagnostic"){
-show("diagnostic");
-startTest();
-}
-
-if(mode==="audio"){
-show("audio");
-}
-
-if(mode==="fast"){
-show("fast");
-}
-
-if(mode==="supervision"){
-show("supervision");
-}
+if(m==="diagnostic"){show("diagnostic");startD();}
+if(m==="audio"){show("audio");}
+if(m==="fast"){show("fast");startF();}
+if(m==="supervision"){show("sup");startS();}
 
 </script>
 
