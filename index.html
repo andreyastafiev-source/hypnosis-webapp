@@ -1,179 +1,194 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Диагностика состояния</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f5f7fb;
-      margin: 0;
-      padding: 20px 14px;
-      color: #1f2937;
-    }
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    .wrap {
-      max-width: 520px;
-      margin: 0 auto;
-    }
+<title>Диагностика</title>
 
-    .hero {
-      background: white;
-      border-radius: 18px;
-      padding: 24px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-    }
+<style>
+body {
+  font-family: -apple-system, sans-serif;
+  background:#f5f7fb;
+  margin:0;
+  padding:16px;
+}
 
-    h1 {
-      font-size: 24px;
-      margin-bottom: 8px;
-      line-height: 1.3;
-    }
+.screen {
+  display:none;
+}
 
-    p {
-      font-size: 15px;
-      line-height: 1.5;
-      color: #6b7280;
-    }
+.active {
+  display:block;
+}
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      margin-top: 20px;
-    }
+.card {
+  background:white;
+  padding:16px;
+  border-radius:12px;
+  margin-top:10px;
+  cursor:pointer;
+  border:1px solid #eee;
+}
 
-    .card {
-      background: #f9fafb;
-      border-radius: 14px;
-      padding: 16px;
-      border: 1px solid #eef1f5;
-      cursor: pointer;
-      transition: .2s;
-    }
+.card:hover {
+  background:#eef2ff;
+}
 
-    .card:hover {
-      background: #f3f6ff;
-    }
+.btn {
+  display:block;
+  margin-top:20px;
+  text-align:center;
+  background:#1e3a8a;
+  color:white;
+  padding:14px;
+  border-radius:12px;
+  text-decoration:none;
+}
 
-    .card h3 {
-      margin: 0 0 4px;
-      font-size: 16px;
-    }
-
-    .card p {
-      font-size: 13px;
-    }
-
-    .selected {
-      border: 1.5px solid #1e3a8a;
-      background: #eef2ff;
-    }
-
-    .result {
-      margin-top: 16px;
-      padding: 14px;
-      border-radius: 12px;
-      background: #eef2ff;
-      font-size: 14px;
-      display: none;
-      line-height: 1.5;
-    }
-
-    .btn {
-      margin-top: 18px;
-      display: block;
-      text-align: center;
-      background: #1e3a8a;
-      color: white;
-      padding: 12px;
-      border-radius: 12px;
-      text-decoration: none;
-      font-size: 15px;
-      font-weight: 500;
-    }
-
-    .btn:hover {
-      background: #162d6b;
-    }
-
-    @media (min-width: 640px) {
-      .grid {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-  </style>
+.result-box {
+  background:white;
+  padding:16px;
+  border-radius:12px;
+  margin-top:12px;
+}
+</style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="hero">
 
-      <h1>Что вас беспокоит сейчас?</h1>
-      <p>Выберите состояние — получите краткий разбор и рекомендацию.</p>
+<div id="app">
 
-      <div class="grid">
-        <div class="card" onclick="selectCard(this, 'anxiety')">
-          <h3>Тревога</h3>
-          <p>Напряжение, контроль мыслей, страх будущего</p>
-        </div>
+<!-- SCREEN 1 -->
+<div id="step1" class="screen active">
+  <h2 id="title">Что вас беспокоит?</h2>
 
-        <div class="card" onclick="selectCard(this, 'fear')">
-          <h3>Страх</h3>
-          <p>Фобии, страх общения, выступлений</p>
-        </div>
+  <div class="card" onclick="step1('anxiety')">Тревога</div>
+  <div class="card" onclick="step1('fear')">Страх</div>
+  <div class="card" onclick="step1('burnout')">Выгорание</div>
+  <div class="card" onclick="step1('relations')">Отношения</div>
+</div>
 
-        <div class="card" onclick="selectCard(this, 'burnout')">
-          <h3>Выгорание</h3>
-          <p>Нет энергии, усталость, пустота</p>
-        </div>
+<!-- SCREEN 2 -->
+<div id="step2" class="screen">
+  <h2>Уточните состояние</h2>
+  <div id="options"></div>
+</div>
 
-        <div class="card" onclick="selectCard(this, 'relations')">
-          <h3>Отношения</h3>
-          <p>Конфликты, страх близости</p>
-        </div>
-      </div>
+<!-- RESULT -->
+<div id="result" class="screen">
+  <h2>Ваш результат</h2>
+  <div class="result-box" id="resultText"></div>
 
-      <div id="result" class="result"></div>
+  <a class="btn" href="https://t.me/AndreyAstafiev?text=Хочу%20записаться">
+    Записаться на консультацию
+  </a>
+</div>
 
-      <a class="btn" href="https://t.me/AndreyAstafiev" target="_blank">
-  Записаться на консультацию
-</a>
+</div>
 
-    </div>
-  </div>
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
 
-  <script>
-    function selectCard(el, type) {
-      document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
-      el.classList.add('selected');
+const user = tg.initDataUnsafe?.user;
+if (user) {
+  document.getElementById("title").innerText =
+    user.first_name + ", что вас беспокоит?";
+}
 
-      const result = document.getElementById('result');
-      result.style.display = 'block';
+let mainChoice = "";
 
-      let text = '';
+function show(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screen).classList.add('active');
+}
 
-      if (type === 'anxiety') {
-        text = 'У вас выраженная тревожность. Часто это связано с внутренним напряжением и гиперконтролем. Гипнотерапия помогает быстро снизить уровень тревоги.';
-      }
+function step1(type) {
+  mainChoice = type;
+  const options = document.getElementById("options");
+  options.innerHTML = "";
 
-      if (type === 'fear') {
-        text = 'Страхи закрепляются на уровне подсознания. Через гипноз можно изменить реакцию и убрать триггер.';
-      }
+  let variants = [];
 
-      if (type === 'burnout') {
-        text = 'Признаки эмоционального выгорания. Важно восстановить ресурс и снизить внутреннее давление.';
-      }
+  if (type === 'anxiety') {
+    variants = [
+      "Постоянные мысли и накручивание",
+      "Тревога без причины",
+      "Физическое напряжение"
+    ];
+  }
 
-      if (type === 'relations') {
-        text = 'Повторяющиеся сценарии в отношениях. Часто это глубинные установки, которые эффективно прорабатываются.';
-      }
+  if (type === 'fear') {
+    variants = [
+      "Страх общения",
+      "Страх выступлений",
+      "Конкретные фобии"
+    ];
+  }
 
-      result.innerHTML = text;
-    }
-  </script>
+  if (type === 'burnout') {
+    variants = [
+      "Нет энергии",
+      "Нет мотивации",
+      "Раздражение и усталость"
+    ];
+  }
+
+  if (type === 'relations') {
+    variants = [
+      "Конфликты",
+      "Страх близости",
+      "Зависимость от партнера"
+    ];
+  }
+
+  variants.forEach(v => {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerText = v;
+    div.onclick = () => showResult(type, v);
+    options.appendChild(div);
+  });
+
+  show("step2");
+}
+
+function showResult(type, detail) {
+  let text = "";
+
+  if (type === 'anxiety') {
+    text = "У вас повышенный уровень тревожности.\n\n" +
+    "Скорее всего, есть внутренний контроль и напряжение.\n\n" +
+    "Рекомендуется работа с подсознанием через гипноз — это самый быстрый способ снизить тревогу.";
+  }
+
+  if (type === 'fear') {
+    text = "Страх закрепился на уровне реакции.\n\n" +
+    "Это не логическая проблема, а автоматическая.\n\n" +
+    "Гипнотерапия помогает убрать корень страха.";
+  }
+
+  if (type === 'burnout') {
+    text = "Вы находитесь в состоянии выгорания.\n\n" +
+    "Ресурс истощён, психика защищается.\n\n" +
+    "Важно восстановление через глубокую работу.";
+  }
+
+  if (type === 'relations') {
+    text = "У вас повторяющиеся сценарии в отношениях.\n\n" +
+    "Это глубинные установки.\n\n" +
+    "Они эффективно прорабатываются в терапии.";
+  }
+
+  document.getElementById("resultText").innerText =
+    text + "\n\nВы выбрали: " + detail;
+
+  show("result");
+}
+</script>
 
 </body>
 </html>
