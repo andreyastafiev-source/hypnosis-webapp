@@ -1,36 +1,170 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Диагностика состояния</title>
+
   <style>
-    body { font-family: Georgia, serif; background:#f7f8fb; margin:0; padding:40px 20px; color:#1f2937; }
-    .wrap { max-width:700px; margin:0 auto; }
-    .hero { background:white; border-radius:20px; padding:40px; box-shadow:0 10px 30px rgba(0,0,0,.08); }
-    h1 { font-size:38px; margin-bottom:10px; }
-    p { font-size:18px; line-height:1.6; }
-    .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:30px; }
-    .card { background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 14px rgba(0,0,0,.06); cursor:pointer; transition:.2s; }
-    .card:hover { transform:translateY(-2px); }
-    .card h3 { margin:0 0 8px; }
-    .btn { margin-top:30px; display:inline-block; background:#1e3a8a; color:white; padding:14px 24px; border-radius:12px; text-decoration:none; }
+    body {
+      font-family: Georgia, serif;
+      background: #f7f8fb;
+      margin: 0;
+      padding: 40px 20px;
+      color: #1f2937;
+    }
+
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.08);
+    }
+
+    h1 {
+      font-size: 34px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 18px;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 30px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.06);
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,.08);
+    }
+
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+
+    .card p {
+      font-size: 15px;
+      color: #6b7280;
+    }
+
+    .selected {
+      border: 2px solid #1e3a8a;
+    }
+
+    .result {
+      margin-top: 30px;
+      padding: 20px;
+      border-radius: 12px;
+      background: #eef2ff;
+      display: none;
+    }
+
+    .btn {
+      margin-top: 30px;
+      display: inline-block;
+      background: #1e3a8a;
+      color: white;
+      padding: 14px 24px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 16px;
+      transition: .2s;
+    }
+
+    .btn:hover {
+      background: #162d6b;
+    }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="hero">
+
       <h1>Что вас беспокоит сейчас?</h1>
-      <p>Выберите состояние, и я помогу определить, с чего лучше начать терапию или сеанс гипноза.</p>
+      <p>Выберите состояние — и получите краткий разбор + рекомендацию по терапии или гипнозу.</p>
+
       <div class="grid">
-        <div class="card"><h3>Тревога</h3><p>Постоянное напряжение и навязчивые мысли</p></div>
-        <div class="card"><h3>Страх</h3><p>Фобии, страх общения, перемен, выступлений</p></div>
-        <div class="card"><h3>Выгорание</h3><p>Усталость, отсутствие сил, эмоциональная пустота</p></div>
-        <div class="card"><h3>Отношения</h3><p>Повторяющиеся конфликты и страх близости</p></div>
+        <div class="card" onclick="selectCard(this, 'anxiety')">
+          <h3>Тревога</h3>
+          <p>Постоянное напряжение, контроль мыслей, страх будущего</p>
+        </div>
+
+        <div class="card" onclick="selectCard(this, 'fear')">
+          <h3>Страх</h3>
+          <p>Фобии, страх общения, выступлений, перемен</p>
+        </div>
+
+        <div class="card" onclick="selectCard(this, 'burnout')">
+          <h3>Выгорание</h3>
+          <p>Нет энергии, усталость, потеря смысла</p>
+        </div>
+
+        <div class="card" onclick="selectCard(this, 'relations')">
+          <h3>Отношения</h3>
+          <p>Конфликты, привязанности, страх близости</p>
+        </div>
       </div>
-      <a class="btn" href="#">Записаться на консультацию</a>
+
+      <div id="result" class="result"></div>
+
+      <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLSfFQ0KzzKgeAuc6lPDxHrrwaMYGjMhxugpIfSk5rV_Pw5wDGQ/viewform?usp=sharing" target="_blank">
+        Записаться на консультацию
+      </a>
+
     </div>
   </div>
+
+  <script>
+    function selectCard(el, type) {
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+
+      const result = document.getElementById('result');
+      result.style.display = 'block';
+
+      let text = '';
+
+      if (type === 'anxiety') {
+        text = '🔎 У вас выраженная тревожность. Часто это связано с гиперконтролем и внутренним напряжением. Рекомендуется работа через расслабление и гипнотерапию.';
+      }
+
+      if (type === 'fear') {
+        text = '🔎 Страхи часто закрепляются на уровне подсознания. Гипноз помогает быстро переписать реакцию и снизить интенсивность.';
+      }
+
+      if (type === 'burnout') {
+        text = '🔎 Признаки эмоционального выгорания. Важно восстановить ресурс и убрать внутреннее давление.';
+      }
+
+      if (type === 'relations') {
+        text = '🔎 Повторяющиеся сценарии в отношениях. Это часто глубинные установки, которые эффективно прорабатываются в терапии.';
+      }
+
+      result.innerHTML = text;
+    }
+  </script>
+
 </body>
 </html>
-
