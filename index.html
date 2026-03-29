@@ -3,274 +3,137 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Психологическая диагностика</title>
 
 <style>
-body {
-  font-family: -apple-system, sans-serif;
-  background:#f6f7fb;
-  margin:0;
-  padding:20px;
-}
-
-.wrap { max-width:520px; margin:auto; }
-
-.card {
-  display:none;
-  background:white;
-  padding:20px;
-  border-radius:16px;
-  box-shadow:0 10px 25px rgba(0,0,0,.08);
-  margin-bottom:16px;
-}
-
-#home {
-  display:block;
-}
-
-h1 { font-size:22px; margin-bottom:10px; }
-
-button {
-  width:100%;
-  padding:14px;
-  margin-top:10px;
-  border:none;
-  border-radius:12px;
-  background:#1e3a8a;
-  color:white;
-  font-size:15px;
-  cursor:pointer;
-}
-
-textarea, select {
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-  border-radius:10px;
-}
-
-audio {
-  width:100%;
-  margin-top:15px;
-}
+body { font-family: sans-serif; background:#f6f7fb; padding:20px; }
+.card { display:none; background:#fff; padding:20px; border-radius:16px; }
+button { width:100%; padding:14px; margin-top:10px; }
 </style>
 </head>
 
 <body>
 
-<div class="wrap">
-
-<!-- HOME -->
-<div id="home" class="card">
-<h1>Что вас беспокоит?</h1>
-
-<button onclick="go('diagnostic')">🧠 Пройти диагностику</button>
-<button onclick="go('audio')">🎧 Снять напряжение</button>
-<button onclick="go('fast')">⚡ Решить проблему</button>
-<button onclick="go('supervision')">👨‍⚕️ Супервизия</button>
-</div>
-
 <!-- DIAGNOSTIC -->
 <div id="diagnostic" class="card">
-<h1 id="qTitle"></h1>
+<h2 id="qTitle"></h2>
 <div id="answers"></div>
 </div>
 
 <!-- RESULT -->
 <div id="result" class="card">
-<h1>Результат анализа</h1>
+<h2>Результат</h2>
 <p id="resultText"></p>
-<button onclick="sendDiag()">Записаться на консультацию</button>
+<button onclick="sendDiag()">Записаться</button>
 </div>
 
 <!-- AUDIO -->
 <div id="audio" class="card">
-<h1>Снятие напряжения</h1>
-
-<p>
-Используйте, если:
-<br>— тревога усиливается
-<br>— перегрузка
-<br>— сложно уснуть
-</p>
-
+<h2>Практика</h2>
 <audio controls>
-<source src="https://github.com/andreyastafiev-source/hypnosis-webapp/raw/main/Hipno_2-001.mp3" type="audio/mpeg">
+<source src="https://github.com/andreyastafiev-source/hypnosis-webapp/raw/main/Hipno_2-001.mp3">
 </audio>
-
-<button onclick="go('home')">Назад</button>
 </div>
 
 <!-- FAST -->
 <div id="fast" class="card">
-<h1>Разбор ситуации</h1>
-
-<select id="problem">
-<option>Тревога</option>
-<option>Страх</option>
-<option>Отношения</option>
-<option>Самооценка</option>
-</select>
-
-<select id="duration">
-<option>Недавно</option>
-<option>Несколько месяцев</option>
-<option>Годы</option>
-</select>
-
-<textarea id="tried" placeholder="Что уже пробовали?"></textarea>
-
+<h2>Опишите проблему</h2>
+<textarea id="fastText"></textarea>
 <button onclick="sendFast()">Отправить</button>
-<button onclick="go('home')">Назад</button>
 </div>
 
-<!-- SUPERVISION -->
+<!-- SUP -->
 <div id="supervision" class="card">
-<h1>Супервизия</h1>
-
-<select id="method">
-<option>CBT</option>
-<option>Гипноз</option>
-<option>Психоанализ</option>
-</select>
-
-<textarea id="case" placeholder="Описание кейса"></textarea>
-<textarea id="block" placeholder="Где затык?"></textarea>
-
+<h2>Супервизия</h2>
+<textarea id="supText"></textarea>
 <button onclick="sendSup()">Отправить</button>
-<button onclick="go('home')">Назад</button>
-</div>
-
 </div>
 
 <script>
-const tg = window.Telegram?.WebApp;
-if (tg) tg.expand();
 
-/* -------- NAV -------- */
+/* NAV */
 
-function hideAll(){
-  document.querySelectorAll('.card').forEach(el=>{
-    el.style.display="none";
-  });
+function show(id){
+document.querySelectorAll('.card').forEach(el=>el.style.display="none");
+document.getElementById(id).style.display="block";
 }
 
-function go(id){
-  hideAll();
-  const el = document.getElementById(id);
-  if(el){
-    el.style.display="block";
-  }
+/* TEST */
 
-  if(id==="diagnostic"){
-    startTest();
-  }
-}
+let q=0, score=0;
 
-/* -------- TEST -------- */
-
-let qIndex=0;
-let score=0;
-
-const questions=[
-"Как часто вы прокручиваете одни и те же мысли?",
-"Есть ли напряжение в теле без причины?",
-"Сложно ли остановить внутренний диалог?",
-"Есть ли сценарии «а вдруг случится...»?",
-"Чувствуете ли потерю контроля?"
+const qs=[
+"Как часто мысли крутятся?",
+"Есть ли напряжение?",
+"Сложно расслабиться?",
+"Есть тревожные сценарии?",
+"Есть ощущение потери контроля?"
 ];
 
 function startTest(){
-  qIndex=0;
-  score=0;
-  showQ();
+q=0; score=0; next();
 }
 
-function showQ(){
-  document.getElementById("qTitle").innerText = questions[qIndex];
-
-  document.getElementById("answers").innerHTML=`
-  <button onclick="ans(2)">Часто</button>
-  <button onclick="ans(1)">Иногда</button>
-  <button onclick="ans(0)">Редко</button>
-  `;
+function next(){
+document.getElementById("qTitle").innerText=qs[q];
+document.getElementById("answers").innerHTML=`
+<button onclick="ans(2)">Часто</button>
+<button onclick="ans(1)">Иногда</button>
+<button onclick="ans(0)">Редко</button>
+`;
 }
 
 function ans(v){
-  score += v;
-  qIndex++;
-
-  if(qIndex < questions.length){
-    showQ();
-  } else {
-    showResult();
-  }
+score+=v; q++;
+if(q<qs.length){next();}
+else{result();}
 }
 
-function showResult(){
-  go("result");
+function result(){
+show("result");
 
-  let text="";
+let t="";
+if(score>=8){t="Сильная тревога — нужна проработка";}
+else if(score>=4){t="Средний уровень";}
+else{t="Низкий уровень";}
 
-  if(score>=8){
-    text=`Высокий уровень тревоги.
-
-У вас сформирован устойчивый автоматический паттерн.
-Состояние запускается без контроля и усиливается.
-
-Рекомендуется глубокая проработка (гипнотерапия).`;
-  }
-  else if(score>=4){
-    text=`Средний уровень тревоги.
-
-Паттерн уже есть, но гибкий.
-Можно быстро скорректировать состояние.`;
-  }
-  else{
-    text=`Низкий уровень тревоги.
-
-Есть отдельные триггеры, но они не закреплены.`;
-  }
-
-  document.getElementById("resultText").innerText = text;
+document.getElementById("resultText").innerText=t;
 }
 
-/* -------- SEND -------- */
+/* SEND */
 
 function sendDiag(){
-  const text=`Добрый день, хочу проработать состояние.
-Результат теста: ${score}`;
-  window.open("https://t.me/hypnosis_therapy_bot?text="+encodeURIComponent(text));
+window.open("https://t.me/hypnosis_therapy_bot?text=Хочу консультацию");
 }
 
 function sendFast(){
-  const text=`Хочу решить проблему:
-
-Проблема: ${problem.value}
-Длительность: ${duration.value}
-Пробовал: ${tried.value}`;
-  window.open("https://t.me/hypnosis_therapy_bot?text="+encodeURIComponent(text));
+window.open("https://t.me/hypnosis_therapy_bot?text="+fastText.value);
 }
 
 function sendSup(){
-  const text=`Супервизия:
-
-Метод: ${method.value}
-Кейс: ${case.value}
-Проблема: ${block.value}`;
-  window.open("https://t.me/hypnosis_therapy_bot?text="+encodeURIComponent(text));
+window.open("https://t.me/hypnosis_therapy_bot?text="+supText.value);
 }
 
-/* -------- MODE -------- */
+/* MODE */
 
-const params=new URLSearchParams(window.location.search);
-const mode=params.get("mode");
+const mode=new URLSearchParams(window.location.search).get("mode");
 
-if(mode){
-  setTimeout(()=>{
-    go(mode);
-  }, 100);
+if(mode==="diagnostic"){
+show("diagnostic");
+startTest();
 }
+
+if(mode==="audio"){
+show("audio");
+}
+
+if(mode==="fast"){
+show("fast");
+}
+
+if(mode==="supervision"){
+show("supervision");
+}
+
 </script>
 
 </body>
