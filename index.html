@@ -1,289 +1,95 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<style>
-body {font-family:sans-serif;background:#f6f7fb;padding:20px;}
-.card {display:none;background:#fff;padding:20px;border-radius:16px;}
-button {width:100%;padding:14px;margin-top:10px;border-radius:12px;cursor:pointer;}
-.progress {color:#666;margin-bottom:10px;}
-</style>
 </head>
 
 <body>
 
-<div id="loading">Загрузка...</div>
-
-<!-- ===== ДИАГНОСТИКА ===== -->
-<div id="diagnostic" class="card">
-<div class="progress" id="dProg"></div>
-<h2 id="dQ"></h2>
-<div id="dA"></div>
-</div>
-
-<div id="dResult" class="card">
-<h2>Анализ состояния</h2>
-<p id="dText"></p>
-
-<button onclick="show('audio')">Снизить состояние</button>
-<button onclick="sendDataToBot({type:'diagnostic'})">Записаться на консультацию</button>
-</div>
-
-<!-- ===== АУДИО ===== -->
-<div id="audio" class="card">
-<h2>Снижение тревоги и напряжения</h2>
-
-<p>
-Это аудиопрактика для работы с автоматической реакцией психики.
-
-Когда использовать:
-— тревога без причины  
-— перегрузка  
-— перед сном  
-
-Как использовать:
-— наушники  
-— без отвлечений  
-— 1–2 раза в день при необходимости  
-</p>
-
-<audio controls>
-<source src="https://github.com/andreyastafiev-source/hypnosis-webapp/raw/main/Hipno_2-001.mp3">
-</audio>
-
-<button onclick="sendDataToBot({type:'audio'})">Хочу консультацию</button>
-</div>
-
-<!-- ===== FAST ===== -->
-<div id="fast" class="card">
-<div class="progress" id="fProg"></div>
-<h3 id="fQ"></h3>
-<div id="fA"></div>
-</div>
-
-<!-- ===== SUP ===== -->
-<div id="sup" class="card">
-<div class="progress" id="sProg"></div>
-<h3 id="sQ"></h3>
-<div id="sA"></div>
-</div>
+<h2 id="title">Загрузка...</h2>
+<div id="content"></div>
 
 <script>
+const tg = window.Telegram?.WebApp;
+if(tg) tg.expand();
 
-/* ===== INIT ===== */
-let tg = window.Telegram?.WebApp;
+/* --- определяем режим --- */
+let mode = new URLSearchParams(location.search).get("mode");
 
-if(tg){
-  tg.expand();
-}else{
-  console.log("WebApp не инициализирован (fallback режим)");
+// fallback
+if(!mode){
+  mode = "diagnostic";
 }
 
-/* ===== NAV ===== */
-function show(id){
-  document.getElementById("loading").style.display="none";
-  document.querySelectorAll('.card').forEach(el=>el.style.display="none");
-  document.getElementById(id).style.display="block";
+/* --- простой экран --- */
+function show(text){
+  document.getElementById("title").innerText = text;
 }
 
-/* ===== ОТПРАВКА ===== */
-function sendDataToBot(payload){
-  if(tg){
-    tg.sendData(JSON.stringify(payload));
-  } else {
-    alert("Данные (fallback): " + JSON.stringify(payload));
-  }
-}
+/* --- диагностика --- */
+let score = 0;
+let step = 0;
 
-/* ===== ДИАГНОСТИКА ===== */
-
-let di=0, score=0;
-
-const dq=[
-"Как часто вы прокручиваете мысли?",
-"Есть ли напряжение в теле?",
-"Сложно остановить мысли?",
-"Есть тревожные сценарии?",
-"Чувство потери контроля?",
-"Проблемы со сном?",
-"Трудно расслабиться?"
+const questions = [
+"Часто ли тревожные мысли?",
+"Есть ли напряжение?",
+"Сложно расслабиться?"
 ];
 
-function startD(){
-  di=0; score=0;
-  nextD();
+function startTest(){
+  next();
 }
 
-function nextD(){
-  dProg.innerText = `Вопрос ${di+1} из ${dq.length}`;
-  dQ.innerText = dq[di];
+function next(){
+  if(step >= questions.length){
+    showResult();
+    return;
+  }
 
-  dA.innerHTML = `
-  <button onclick="ansD(3)">Почти всегда</button>
-  <button onclick="ansD(2)">Часто</button>
-  <button onclick="ansD(1)">Иногда</button>
-  <button onclick="ansD(0)">Редко</button>
+  document.getElementById("title").innerText =
+    `Вопрос ${step+1} из ${questions.length}`;
+
+  document.getElementById("content").innerHTML = `
+    <p>${questions[step]}</p>
+    <button onclick="answer(2)">Часто</button>
+    <button onclick="answer(1)">Иногда</button>
+    <button onclick="answer(0)">Редко</button>
   `;
 }
 
-function ansD(v){
+function answer(v){
   score += v;
-  di++;
+  step++;
+  next();
+}
 
-  if(di < dq.length){
-    nextD();
+function showResult(){
+  show("Результат");
+
+  document.getElementById("content").innerHTML = `
+    <p>Баллы: ${score}</p>
+    <button onclick="send()">Отправить</button>
+  `;
+}
+
+function send(){
+  if(tg){
+    tg.sendData(JSON.stringify({
+      type:"diagnostic",
+      score:score
+    }));
   } else {
-    finishD();
+    alert("НЕ WebApp");
   }
 }
 
-function finishD(){
-  show("dResult");
-
-  let text="";
-
-  if(score >= 15){
-    text=`Высокий уровень тревожного паттерна.
-
-Что происходит:
-Реакция закреплена и запускается автоматически.
-
-Как проявляется:
-— постоянные мысли  
-— напряжение в теле  
-— ощущение потери контроля  
-
-Что будет дальше:
-Состояние будет усиливаться и закрепляться.
-
-Рекомендации:
-— работа с подсознательной реакцией  
-— индивидуальная проработка`;
-  }
-  else if(score >= 8){
-    text=`Средний уровень тревоги.
-
-Что происходит:
-Паттерн формируется.
-
-Рекомендации:
-— можно быстро скорректировать состояние  
-— регулярная практика даст результат`;
-  }
-  else{
-    text=`Низкий уровень тревоги.
-
-Что происходит:
-Есть отдельные триггеры, но нет закрепления.
-
-Рекомендации:
-— наблюдение  
-— профилактическая работа`;
-  }
-
-  dText.innerText = text;
+/* --- запуск --- */
+if(mode === "diagnostic"){
+  startTest();
+} else {
+  show("Режим: " + mode);
 }
-
-/* ===== FAST ===== */
-
-let fi=0, fd={};
-
-const fq=[
-{q:"Что беспокоит?",a:["Тревога","Страх","Отношения","Самооценка"]},
-{q:"Как давно?",a:["Недавно","Месяцы","Годы"]},
-{q:"Насколько мешает?",a:["Слабо","Средне","Сильно"]}
-];
-
-function startF(){
-  fi=0; fd={};
-  nextF();
-}
-
-function nextF(){
-  fProg.innerText = `Шаг ${fi+1} из ${fq.length}`;
-  fQ.innerText = fq[fi].q;
-
-  fA.innerHTML = fq[fi].a.map(a =>
-    `<button onclick="ansF('${a}')">${a}</button>`
-  ).join("");
-}
-
-function ansF(v){
-  fd[fq[fi].q] = v;
-  fi++;
-
-  if(fi < fq.length){
-    nextF();
-  } else {
-    sendDataToBot({type:"fast", data:fd});
-  }
-}
-
-/* ===== SUP ===== */
-
-let si=0, sd={};
-
-const sq=[
-{q:"Метод?",a:["CBT","Гипноз","Психоанализ"]},
-{q:"Тип кейса?",a:["Тревога","Травма","Поведение"]},
-{q:"Где сложность?",a:["Нет динамики","Сопротивление","Не понимаю"]}
-];
-
-function startS(){
-  si=0; sd={};
-  nextS();
-}
-
-function nextS(){
-  sProg.innerText = `Шаг ${si+1} из ${sq.length}`;
-  sQ.innerText = sq[si].q;
-
-  sA.innerHTML = sq[si].a.map(a =>
-    `<button onclick="ansS('${a}')">${a}</button>`
-  ).join("");
-}
-
-function ansS(v){
-  sd[sq[si].q] = v;
-  si++;
-
-  if(si < sq.length){
-    nextS();
-  } else {
-    sendDataToBot({type:"supervision", data:sd});
-  }
-}
-
-/* ===== MODE ===== */
-
-const mode = new URLSearchParams(location.search).get("mode");
-
-setTimeout(()=>{
-  if(mode === "diagnostic"){
-    show("diagnostic");
-    startD();
-  }
-  else if(mode === "audio"){
-    show("audio");
-  }
-  else if(mode === "fast"){
-    show("fast");
-    startF();
-  }
-  else if(mode === "supervision"){
-    show("sup");
-    startS();
-  }
-  else{
-    show("diagnostic");
-    startD();
-  }
-},100);
-
 </script>
 
 </body>
