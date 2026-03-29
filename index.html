@@ -3,37 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- ВАЖНО -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <style>
 body{font-family:sans-serif;background:#f6f7fb;padding:20px;}
 .card{display:none;background:#fff;padding:20px;border-radius:16px;}
 button{width:100%;padding:14px;margin-top:10px;border-radius:12px;}
-.progress{color:#666;margin-bottom:10px;}
 </style>
 </head>
 
 <body>
 
+<div id="loading">Загрузка...</div>
+
 <div id="diagnostic" class="card">
-<div class="progress" id="prog"></div>
 <h2 id="q"></h2>
 <div id="a"></div>
 </div>
 
 <div id="result" class="card">
-<h2>Анализ состояния</h2>
+<h2>Результат</h2>
 <p id="text"></p>
-
-<button onclick="go('audio')">Снизить состояние</button>
-<button onclick="sendResult()">Записаться</button>
-</div>
-
-<div id="audio" class="card">
-<h2>Снижение тревоги</h2>
-<p>Используйте при тревоге, перед сном, при перегрузе.</p>
-<audio controls>
-<source src="https://github.com/andreyastafiev-source/hypnosis-webapp/raw/main/Hipno_2-001.mp3">
-</audio>
-<button onclick="sendAudio()">Записаться</button>
+<button onclick="sendResult()">Отправить</button>
 </div>
 
 <script>
@@ -41,6 +34,7 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 
 function show(id){
+document.getElementById("loading").style.display="none";
 document.querySelectorAll('.card').forEach(el=>el.style.display="none");
 document.getElementById(id).style.display="block";
 }
@@ -49,10 +43,10 @@ document.getElementById(id).style.display="block";
 let i=0,score=0;
 
 const qs=[
-"Как часто вы прокручиваете мысли?",
-"Есть напряжение в теле?",
-"Сложно остановить мысли?",
-"Есть тревожные сценарии?",
+"Как часто тревожные мысли?",
+"Есть напряжение?",
+"Сложно расслабиться?",
+"Есть страхи?",
 "Чувство потери контроля?"
 ];
 
@@ -61,7 +55,6 @@ i=0;score=0;next();
 }
 
 function next(){
-prog.innerText=`${i+1}/${qs.length}`;
 q.innerText=qs[i];
 a.innerHTML=`
 <button onclick="ans(2)">Часто</button>
@@ -78,18 +71,7 @@ else{finish();}
 function finish(){
 show("result");
 
-let t="";
-if(score>=8){
-t="Высокий уровень тревоги. Нужна глубокая работа.";
-}
-else if(score>=4){
-t="Средний уровень. Можно скорректировать.";
-}
-else{
-t="Низкий уровень.";
-}
-
-text.innerText=t;
+text.innerText = "Баллы: "+score;
 }
 
 /* SEND */
@@ -101,18 +83,22 @@ score:score
 }));
 }
 
-function sendAudio(){
-tg.sendData(JSON.stringify({
-type:"audio"
-}));
+/* MODE + FALLBACK */
+
+const params = new URLSearchParams(window.location.search);
+let mode = params.get("mode");
+
+if(!mode){
+mode = "diagnostic"; // fallback
 }
 
-/* START */
+setTimeout(()=>{
+if(mode==="diagnostic"){
+show("diagnostic");
+start();
+}
+},100);
 
-const mode=new URLSearchParams(location.search).get("mode");
-
-if(mode==="diagnostic"){show("diagnostic");start();}
-if(mode==="audio"){show("audio");}
 </script>
 
 </body>
