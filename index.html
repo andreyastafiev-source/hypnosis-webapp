@@ -31,6 +31,7 @@ body {
   margin-top:10px;
   border:1px solid #eee;
   cursor:pointer;
+  transition:.2s;
 }
 
 .card:hover { background:#eef2ff; }
@@ -44,6 +45,7 @@ body {
   padding:14px;
   border-radius:12px;
   text-decoration:none;
+  font-weight:500;
 }
 
 .result-box {
@@ -69,7 +71,7 @@ body {
   <div class="card" onclick="goTo('supervision')">Я специалист (супервизия)</div>
 </div>
 
-<!-- ТЕСТ -->
+<!-- ДИАГНОСТИКА -->
 <div id="step1" class="screen">
   <h2>Что вас беспокоит?</h2>
 
@@ -90,25 +92,27 @@ body {
 
   <div class="result-box" id="resultText"></div>
 
-  <!-- АУДИО -->
-  <audio controls style="width:100%; margin-top:15px;">
+  <h3 style="margin-top:20px;">🎧 Попробуйте практику</h3>
+  <p>Короткое упражнение для снижения состояния</p>
+
+  <audio controls style="width:100%;">
     <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
   </audio>
 
-  <a class="btn" href="https://t.me/AndreyAstafiev">
+  <a class="btn" href="https://t.me/AndreyAstafiev?text=Хочу%20проработать%20состояние">
     Начать работу с этим состоянием
   </a>
 </div>
 
 <!-- БЫСТРАЯ ЗАПИСЬ -->
 <div id="fast" class="screen">
-  <h2>С чем вы хотите поработать?</h2>
+  <h2>Выберите проблему</h2>
 
   <div class="card">Тревога</div>
   <div class="card">Страх</div>
   <div class="card">Отношения</div>
 
-  <a class="btn" href="https://t.me/AndreyAstafiev">
+  <a class="btn" href="https://t.me/AndreyAstafiev?text=Хочу%20записаться">
     Перейти к записи
   </a>
 </div>
@@ -117,13 +121,13 @@ body {
 <div id="supervision" class="screen">
   <h2>Супервизия</h2>
 
-  <p>Разбор сложных кейсов для специалистов</p>
+  <p>Работа с кейсами специалистов</p>
 
-  <div class="card">Разобрать кейс</div>
-  <div class="card">Групповая супервизия</div>
+  <div class="card">Разобрать сложный случай</div>
+  <div class="card">Получить обратную связь</div>
 
-  <a class="btn" href="https://t.me/AndreyAstafiev">
-    Отправить запрос
+  <a class="btn" href="https://t.me/AndreyAstafiev?text=Хочу%20супервизию">
+    Отправить кейс
   </a>
 </div>
 
@@ -162,7 +166,7 @@ function step1(type) {
   }
 
   if (type === 'fear') {
-    variants = ["Соц страх","Выступления","Фобии"];
+    variants = ["Социальный страх","Выступления","Фобии"];
   }
 
   if (type === 'burnout') {
@@ -185,14 +189,48 @@ function step1(type) {
 }
 
 function showResult(type, detail) {
+  const name = user?.first_name || "Вы";
   let score = Math.floor(Math.random()*20)+70;
 
-  document.getElementById("resultText").innerHTML =
-    `<b>Результат:</b><br><br>
-     Уровень: ${score}%<br><br>
-     Вы выбрали: ${detail}<br><br>
-     Это состояние можно эффективно проработать через гипнотерапию.`;
+  let text = "";
 
+  if (type === 'anxiety') {
+    text = `<b>${name}, ваш результат:</b><br><br>
+    <b>Повышенная тревожность (${score}%)</b><br><br>
+    Вы выбрали: <b>${detail}</b><br><br>
+    Это состояние связано с внутренним напряжением и контролем.<br><br>
+    ⚠️ Может усиливаться со временем<br><br>
+    💡 Прорабатывается через гипноз`;
+  }
+
+  if (type === 'fear') {
+    text = `<b>${name}, ваш результат:</b><br><br>
+    <b>Закреплённый страх (${score}%)</b><br><br>
+    Вы выбрали: <b>${detail}</b><br><br>
+    Это автоматическая реакция.<br><br>
+    ⚠️ Ограничивает поведение<br><br>
+    💡 Можно переписать через гипноз`;
+  }
+
+  if (type === 'burnout') {
+    text = `<b>${name}, ваш результат:</b><br><br>
+    <b>Выгорание (${score}%)</b><br><br>
+    Вы выбрали: <b>${detail}</b><br><br>
+    Есть снижение ресурса.<br><br>
+    ⚠️ Может углубляться<br><br>
+    💡 Требует восстановления`;
+  }
+
+  if (type === 'relations') {
+    text = `<b>${name}, ваш результат:</b><br><br>
+    <b>Сценарии в отношениях (${score}%)</b><br><br>
+    Вы выбрали: <b>${detail}</b><br><br>
+    Повторяющиеся паттерны.<br><br>
+    ⚠️ Будут повторяться<br><br>
+    💡 Можно изменить`;
+  }
+
+  document.getElementById("resultText").innerHTML = text;
   show("result");
 }
 </script>
