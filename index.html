@@ -3,80 +3,35 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <title>Психо WebApp</title>
 
 <style>
-body {
-  font-family: -apple-system, sans-serif;
-  background:#f5f7fb;
-  margin:0;
-  padding:16px;
-}
-
-.container {
-  max-width:520px;
-  margin:0 auto;
-}
-
-.screen { display:none; }
-.active { display:block; }
-
-.card {
-  background:white;
-  padding:14px;
-  border-radius:12px;
-  margin-top:10px;
-  border:1px solid #eee;
-  cursor:pointer;
-}
-
-.card:hover { background:#eef2ff; }
-
-.btn {
-  display:block;
-  margin-top:20px;
-  text-align:center;
-  background:#1e3a8a;
-  color:white;
-  padding:14px;
-  border-radius:12px;
-  text-decoration:none;
-}
-
-.result-box {
-  background:white;
-  padding:16px;
-  border-radius:12px;
-  margin-top:12px;
-  line-height:1.6;
-}
-textarea {
-  width:100%;
-  margin-top:10px;
-  padding:10px;
-  border-radius:10px;
-  border:1px solid #ccc;
-}
+body { font-family: -apple-system, sans-serif; background:#f5f7fb; margin:0; padding:16px;}
+.container { max-width:520px; margin:0 auto;}
+.screen { display:none;}
+.active { display:block;}
+.card { background:white; padding:14px; border-radius:12px; margin-top:10px; border:1px solid #eee; cursor:pointer;}
+.card:hover { background:#eef2ff;}
+.btn { display:block; margin-top:20px; text-align:center; background:#1e3a8a; color:white; padding:14px; border-radius:12px; text-decoration:none;}
+.result-box { background:white; padding:16px; border-radius:12px; margin-top:12px; line-height:1.6;}
+textarea { width:100%; margin-top:10px; padding:10px; border-radius:10px; border:1px solid #ccc;}
 </style>
 </head>
 
 <body>
-
 <div class="container">
 
-<!-- ВОПРОС -->
+<!-- QUESTION -->
 <div id="question" class="screen">
   <h2 id="qTitle"></h2>
   <div id="answers"></div>
 </div>
 
-<!-- РЕЗУЛЬТАТ -->
+<!-- RESULT -->
 <div id="result" class="screen">
   <h2>Ваш результат</h2>
-
   <div id="resultText" class="result-box"></div>
 
   <a id="ctaBtn" class="btn" target="_blank">
@@ -84,7 +39,7 @@ textarea {
   </a>
 
   <a class="btn" href="?mode=audio">
-    Пройти практику сейчас
+    Пройти практику
   </a>
 </div>
 
@@ -94,19 +49,14 @@ textarea {
 
   <div class="result-box">
     <b>Что это:</b><br><br>
-    Короткая практика для снижения напряжения и тревоги.<br><br>
-
-    <b>Когда использовать:</b><br>
-    • тревога<br>
-    • напряжение<br>
-    • перед сном<br><br>
+    Короткая практика для снижения напряжения.<br><br>
 
     <b>Как выполнять:</b><br>
-    1. Сядьте или лягте удобно<br>
+    1. Удобно расположитесь<br>
     2. Наденьте наушники<br>
-    3. Просто слушайте голос<br><br>
+    3. Просто слушайте<br><br>
 
-    ⚠️ Не анализируйте — просто наблюдайте
+    ⚠️ Не анализируйте
   </div>
 
   <audio controls style="width:100%; margin-top:15px;">
@@ -114,7 +64,7 @@ textarea {
   </audio>
 
   <a class="btn" href="https://t.me/AndreyAstafiev?text=Добрый%20день,%20хочу%20проработать%20состояние">
-    Записаться на консультацию
+    Записаться
   </a>
 </div>
 
@@ -127,10 +77,20 @@ textarea {
   <div class="card" onclick="setFast('Отношения')">Отношения</div>
 
   <div id="fastStep2" style="display:none;">
-    <h3>Опишите ситуацию</h3>
-    <textarea id="fastText"></textarea>
+    <h3>Как проявляется?</h3>
 
-    <a id="fastBtn" class="btn" target="_blank">Записаться</a>
+    <div class="card" onclick="setFastDetail('Постоянные мысли')">Постоянные мысли</div>
+    <div class="card" onclick="setFastDetail('Напряжение')">Напряжение</div>
+    <div class="card" onclick="setFastDetail('Избегание')">Избегание</div>
+
+    <div id="fastStep3" style="display:none;">
+      <h3>Опишите ситуацию</h3>
+      <textarea id="fastText"></textarea>
+
+      <a id="fastBtn" class="btn" target="_blank">
+        Записаться на консультацию
+      </a>
+    </div>
   </div>
 </div>
 
@@ -138,14 +98,26 @@ textarea {
 <div id="supervision" class="screen">
   <h2>Супервизия</h2>
 
-  <div class="card" onclick="setSup('Сложный кейс')">Сложный кейс</div>
-  <div class="card" onclick="setSup('Нет понимания клиента')">Нет понимания клиента</div>
+  <h3>Что происходит?</h3>
+  <div class="card" onclick="setSup('Сложный клиент')">Сложный клиент</div>
+  <div class="card" onclick="setSup('Нет прогресса')">Нет прогресса</div>
+  <div class="card" onclick="setSup('Не понимаю клиента')">Не понимаю клиента</div>
 
   <div id="supStep2" style="display:none;">
-    <h3>Опишите кейс</h3>
-    <textarea id="supText"></textarea>
+    <h3>Ваш опыт</h3>
 
-    <a id="supBtn" class="btn" target="_blank">Отправить запрос</a>
+    <div class="card" onclick="setSupExp('До 1 года')">До 1 года</div>
+    <div class="card" onclick="setSupExp('1-3 года')">1-3 года</div>
+    <div class="card" onclick="setSupExp('3+ года')">3+ года</div>
+
+    <div id="supStep3" style="display:none;">
+      <h3>Опишите кейс</h3>
+      <textarea id="supText"></textarea>
+
+      <a id="supBtn" class="btn" target="_blank">
+        Отправить запрос
+      </a>
+    </div>
   </div>
 </div>
 
@@ -211,15 +183,14 @@ function showResult(){
 
 Проблема: <b>${answersData.main}</b><br><br>
 
-Формируется устойчивая реакция на триггеры (${answersData.trigger})<br><br>
+Формируется реакция на триггеры (${answersData.trigger})<br><br>
 
-Это проявляется как:<br>
-• ${answersData.symptom}<br>
-• напряжение<br><br>
+Проявляется как:<br>
+• ${answersData.symptom}<br><br>
 
-⚠️ Без работы состояние усиливается<br><br>
+⚠️ Без работы усиливается<br><br>
 
-💡 Эффективно прорабатывается через гипнотерапию
+💡 Рекомендуется работа с подсознанием
 `;
 
   document.getElementById("resultText").innerHTML=text;
@@ -240,42 +211,69 @@ function showResult(){
   show("result");
 }
 
-let fastProblem="";
+/* FAST */
+let fastProblem="", fastDetail="";
+
 function setFast(val){
   fastProblem=val;
   document.getElementById("fastStep2").style.display="block";
 }
 
+function setFastDetail(val){
+  fastDetail=val;
+  document.getElementById("fastStep3").style.display="block";
+}
+
 document.addEventListener("input",()=>{
   const text=document.getElementById("fastText")?.value||"";
-  const msg=encodeURIComponent(`Добрый день!
+
+  const msg=encodeURIComponent(
+`Добрый день!
 Хочу записаться.
 
 Проблема: ${fastProblem}
-Описание: ${text}`);
+Проявление: ${fastDetail}
+
+Описание:
+${text}`
+  );
 
   document.getElementById("fastBtn").href =
     `https://t.me/AndreyAstafiev?text=${msg}`;
 });
 
-let supType="";
+/* SUPERVISION */
+let supType="", supExp="";
+
 function setSup(val){
   supType=val;
   document.getElementById("supStep2").style.display="block";
 }
 
+function setSupExp(val){
+  supExp=val;
+  document.getElementById("supStep3").style.display="block";
+}
+
 document.addEventListener("input",()=>{
   const text=document.getElementById("supText")?.value||"";
-  const msg=encodeURIComponent(`Добрый день!
-Супервизия.
+
+  const msg=encodeURIComponent(
+`Добрый день!
+Запрос на супервизию.
 
 Тип: ${supType}
-Кейс: ${text}`);
+Опыт: ${supExp}
+
+Кейс:
+${text}`
+  );
 
   document.getElementById("supBtn").href =
     `https://t.me/AndreyAstafiev?text=${msg}`;
 });
 
+/* ROUTING */
 if(mode==="diagnostic") startTest();
 else if(mode==="fast") show("fast");
 else if(mode==="supervision") show("supervision");
