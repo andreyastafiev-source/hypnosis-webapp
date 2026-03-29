@@ -6,7 +6,7 @@
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<title>Психо WebApp</title>
+<title>Психологическая диагностика</title>
 
 <style>
 body {
@@ -31,7 +31,6 @@ body {
   margin-top:10px;
   border:1px solid #eee;
   cursor:pointer;
-  transition:.2s;
 }
 
 .card:hover { background:#eef2ff; }
@@ -45,7 +44,6 @@ body {
   padding:14px;
   border-radius:12px;
   text-decoration:none;
-  font-weight:500;
 }
 
 .result-box {
@@ -53,7 +51,7 @@ body {
   padding:16px;
   border-radius:12px;
   margin-top:12px;
-  line-height:1.5;
+  line-height:1.6;
 }
 </style>
 </head>
@@ -66,45 +64,34 @@ body {
 <div id="menu" class="screen active">
   <h2 id="hello">Что вы хотите сейчас?</h2>
 
-  <div class="card" onclick="goTo('diagnostic')">Пройти диагностику</div>
-  <div class="card" onclick="goTo('fast')">Решить проблему</div>
-  <div class="card" onclick="goTo('supervision')">Я специалист (супервизия)</div>
+  <div class="card" onclick="startTest()">Пройти диагностику</div>
+  <div class="card" onclick="show('fast')">Решить проблему</div>
+  <div class="card" onclick="show('supervision')">Супервизия</div>
 </div>
 
-<!-- ДИАГНОСТИКА -->
-<div id="step1" class="screen">
-  <h2>Что вас беспокоит?</h2>
-
-  <div class="card" onclick="step1('anxiety')">Тревога</div>
-  <div class="card" onclick="step1('fear')">Страх</div>
-  <div class="card" onclick="step1('burnout')">Выгорание</div>
-  <div class="card" onclick="step1('relations')">Отношения</div>
-</div>
-
-<div id="step2" class="screen">
-  <h2>Уточните состояние</h2>
-  <div id="options"></div>
+<!-- ВОПРОС -->
+<div id="question" class="screen">
+  <h2 id="qTitle"></h2>
+  <div id="answers"></div>
 </div>
 
 <!-- РЕЗУЛЬТАТ -->
 <div id="result" class="screen">
   <h2>Ваш результат</h2>
 
-  <div class="result-box" id="resultText"></div>
+  <div id="resultText" class="result-box"></div>
 
   <h3 style="margin-top:20px;">🎧 Попробуйте практику</h3>
-  <p>Короткое упражнение для снижения состояния</p>
-
   <audio controls style="width:100%;">
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
+    <source src="Hipno_2-001.mp3">
   </audio>
 
   <a class="btn" href="https://t.me/AndreyAstafiev?text=Хочу%20проработать%20состояние">
-    Начать работу с этим состоянием
+    Начать работу
   </a>
 </div>
 
-<!-- БЫСТРАЯ ЗАПИСЬ -->
+<!-- FAST -->
 <div id="fast" class="screen">
   <h2>Выберите проблему</h2>
 
@@ -112,23 +99,17 @@ body {
   <div class="card">Страх</div>
   <div class="card">Отношения</div>
 
-  <a class="btn" href="https://t.me/AndreyAstafiev?text=Хочу%20записаться">
-    Перейти к записи
-  </a>
+  <a class="btn" href="https://t.me/AndreyAstafiev">Записаться</a>
 </div>
 
-<!-- СУПЕРВИЗИЯ -->
+<!-- SUPERVISION -->
 <div id="supervision" class="screen">
   <h2>Супервизия</h2>
 
-  <p>Работа с кейсами специалистов</p>
+  <div class="card">Разбор кейса</div>
+  <div class="card">Сложный клиент</div>
 
-  <div class="card">Разобрать сложный случай</div>
-  <div class="card">Получить обратную связь</div>
-
-  <a class="btn" href="https://t.me/AndreyAstafiev?text=Хочу%20супервизию">
-    Отправить кейс
-  </a>
+  <a class="btn" href="https://t.me/AndreyAstafiev">Отправить запрос</a>
 </div>
 
 </div>
@@ -138,97 +119,114 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 
 const user = tg.initDataUnsafe?.user;
+const name = user?.first_name || "Вы";
 
-if (user) {
-  document.getElementById("hello").innerText =
-    user.first_name + ", что вы хотите сейчас?";
-}
+document.getElementById("hello").innerText =
+  name + ", что вы хотите сейчас?";
+
+let answersData = {};
+
+const questions = [
+  {
+    key: "main",
+    title: "Что вас беспокоит больше всего?",
+    options: ["Тревога","Страх","Выгорание","Отношения"]
+  },
+  {
+    key: "symptom",
+    title: "Как это проявляется чаще всего?",
+    options: [
+      "Постоянные мысли",
+      "Физическое напряжение",
+      "Избегание ситуаций",
+      "Эмоциональная усталость"
+    ]
+  },
+  {
+    key: "trigger",
+    title: "Когда это усиливается?",
+    options: [
+      "Когда остаюсь один",
+      "Перед важными событиями",
+      "В общении",
+      "Постоянно"
+    ]
+  },
+  {
+    key: "reaction",
+    title: "Как вы обычно реагируете?",
+    options: [
+      "Контролирую",
+      "Избегаю",
+      "Замыкаюсь",
+      "Переосмысливаю"
+    ]
+  }
+];
+
+let step = 0;
 
 function show(screen) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(screen).classList.add('active');
 }
 
-function goTo(type) {
-  if (type === 'diagnostic') show('step1');
-  if (type === 'fast') show('fast');
-  if (type === 'supervision') show('supervision');
+function startTest() {
+  step = 0;
+  answersData = {};
+  showQuestion();
 }
 
-function step1(type) {
-  const options = document.getElementById("options");
-  options.innerHTML = "";
+function showQuestion() {
+  const q = questions[step];
+  document.getElementById("qTitle").innerText = q.title;
 
-  let variants = [];
+  const answers = document.getElementById("answers");
+  answers.innerHTML = "";
 
-  if (type === 'anxiety') {
-    variants = ["Навязчивые мысли","Тревога без причины","Напряжение"];
-  }
-
-  if (type === 'fear') {
-    variants = ["Социальный страх","Выступления","Фобии"];
-  }
-
-  if (type === 'burnout') {
-    variants = ["Нет энергии","Нет мотивации","Раздражение"];
-  }
-
-  if (type === 'relations') {
-    variants = ["Конфликты","Страх близости","Зависимость"];
-  }
-
-  variants.forEach(v => {
+  q.options.forEach(opt => {
     const div = document.createElement("div");
     div.className = "card";
-    div.innerText = v;
-    div.onclick = () => showResult(type, v);
-    options.appendChild(div);
+    div.innerText = opt;
+
+    div.onclick = () => {
+      answersData[q.key] = opt;
+      step++;
+
+      if (step < questions.length) {
+        showQuestion();
+      } else {
+        showResult();
+      }
+    };
+
+    answers.appendChild(div);
   });
 
-  show("step2");
+  show("question");
 }
 
-function showResult(type, detail) {
-  const name = user?.first_name || "Вы";
-  let score = Math.floor(Math.random()*20)+70;
+function showResult() {
+  let text = `
+<b>${name}, по вашим ответам:</b><br><br>
 
-  let text = "";
+У вас формируется реакция, связанная с <b>${answersData.main}</b>.<br><br>
 
-  if (type === 'anxiety') {
-    text = `<b>${name}, ваш результат:</b><br><br>
-    <b>Повышенная тревожность (${score}%)</b><br><br>
-    Вы выбрали: <b>${detail}</b><br><br>
-    Это состояние связано с внутренним напряжением и контролем.<br><br>
-    ⚠️ Может усиливаться со временем<br><br>
-    💡 Прорабатывается через гипноз`;
-  }
+Что это значит:<br>
+Ваша психика находится в состоянии повышенного напряжения и пытается контролировать ситуацию.<br><br>
 
-  if (type === 'fear') {
-    text = `<b>${name}, ваш результат:</b><br><br>
-    <b>Закреплённый страх (${score}%)</b><br><br>
-    Вы выбрали: <b>${detail}</b><br><br>
-    Это автоматическая реакция.<br><br>
-    ⚠️ Ограничивает поведение<br><br>
-    💡 Можно переписать через гипноз`;
-  }
+Почему это происходит:<br>
+Формируется устойчивая реакция на триггеры (${answersData.trigger}), которая закрепилась на уровне подсознания.<br><br>
 
-  if (type === 'burnout') {
-    text = `<b>${name}, ваш результат:</b><br><br>
-    <b>Выгорание (${score}%)</b><br><br>
-    Вы выбрали: <b>${detail}</b><br><br>
-    Есть снижение ресурса.<br><br>
-    ⚠️ Может углубляться<br><br>
-    💡 Требует восстановления`;
-  }
+Как это влияет:<br>
+• усиливает внутреннее напряжение<br>
+• снижает качество жизни<br>
+• формирует повторяющиеся сценарии<br><br>
 
-  if (type === 'relations') {
-    text = `<b>${name}, ваш результат:</b><br><br>
-    <b>Сценарии в отношениях (${score}%)</b><br><br>
-    Вы выбрали: <b>${detail}</b><br><br>
-    Повторяющиеся паттерны.<br><br>
-    ⚠️ Будут повторяться<br><br>
-    💡 Можно изменить`;
-  }
+⚠️ Если это не проработать, состояние будет усиливаться<br><br>
+
+💡 В вашем случае эффективна работа с подсознанием (гипнотерапия)
+`;
 
   document.getElementById("resultText").innerHTML = text;
   show("result");
