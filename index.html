@@ -6,7 +6,7 @@
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<title>Психологическая диагностика</title>
+<title>Психо WebApp</title>
 
 <style>
 body {
@@ -53,21 +53,19 @@ body {
   margin-top:12px;
   line-height:1.6;
 }
+textarea {
+  width:100%;
+  margin-top:10px;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #ccc;
+}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-
-<!-- МЕНЮ -->
-<div id="menu" class="screen active">
-  <h2 id="hello">Что вы хотите сейчас?</h2>
-
-  <div class="card" onclick="startTest()">Пройти диагностику</div>
-  <div class="card" onclick="show('fast')">Решить проблему</div>
-  <div class="card" onclick="show('supervision')">Супервизия</div>
-</div>
 
 <!-- ВОПРОС -->
 <div id="question" class="screen">
@@ -81,35 +79,74 @@ body {
 
   <div id="resultText" class="result-box"></div>
 
-  <h3 style="margin-top:20px;">🎧 Попробуйте практику</h3>
-  <audio controls style="width:100%;">
-    <source src="https://github.com/andreyastafiev-source/hypnosis-webapp/blob/2b06a262b576e54cd7517d398890952ca9742321/Hipno_2-001.mp3">
+  <a id="ctaBtn" class="btn" target="_blank">
+    Записаться на консультацию
+  </a>
+
+  <a class="btn" href="?mode=audio">
+    Пройти практику сейчас
+  </a>
+</div>
+
+<!-- AUDIO -->
+<div id="audio" class="screen">
+  <h2>Практика расслабления</h2>
+
+  <div class="result-box">
+    <b>Что это:</b><br><br>
+    Короткая практика для снижения напряжения и тревоги.<br><br>
+
+    <b>Когда использовать:</b><br>
+    • тревога<br>
+    • напряжение<br>
+    • перед сном<br><br>
+
+    <b>Как выполнять:</b><br>
+    1. Сядьте или лягте удобно<br>
+    2. Наденьте наушники<br>
+    3. Просто слушайте голос<br><br>
+
+    ⚠️ Не анализируйте — просто наблюдайте
+  </div>
+
+  <audio controls style="width:100%; margin-top:15px;">
+    <source src="https://andreyastafiev-source.github.io/hypnosis-webapp/Hipno_2-001.mp3" type="audio/mpeg">
   </audio>
 
-  <a class="btn" href="https://t.me/AndreyAstafiev?text=Хочу%20проработать%20состояние">
-    Начать работу
+  <a class="btn" href="https://t.me/AndreyAstafiev?text=Добрый%20день,%20хочу%20проработать%20состояние">
+    Записаться на консультацию
   </a>
 </div>
 
 <!-- FAST -->
 <div id="fast" class="screen">
-  <h2>Выберите проблему</h2>
+  <h2>С чем вы хотите поработать?</h2>
 
-  <div class="card">Тревога</div>
-  <div class="card">Страх</div>
-  <div class="card">Отношения</div>
+  <div class="card" onclick="setFast('Тревога')">Тревога</div>
+  <div class="card" onclick="setFast('Страх')">Страх</div>
+  <div class="card" onclick="setFast('Отношения')">Отношения</div>
 
-  <a class="btn" href="https://t.me/AndreyAstafiev">Записаться</a>
+  <div id="fastStep2" style="display:none;">
+    <h3>Опишите ситуацию</h3>
+    <textarea id="fastText"></textarea>
+
+    <a id="fastBtn" class="btn" target="_blank">Записаться</a>
+  </div>
 </div>
 
 <!-- SUPERVISION -->
 <div id="supervision" class="screen">
   <h2>Супервизия</h2>
 
-  <div class="card">Разбор кейса</div>
-  <div class="card">Сложный клиент</div>
+  <div class="card" onclick="setSup('Сложный кейс')">Сложный кейс</div>
+  <div class="card" onclick="setSup('Нет понимания клиента')">Нет понимания клиента</div>
 
-  <a class="btn" href="https://t.me/AndreyAstafiev">Отправить запрос</a>
+  <div id="supStep2" style="display:none;">
+    <h3>Опишите кейс</h3>
+    <textarea id="supText"></textarea>
+
+    <a id="supBtn" class="btn" target="_blank">Отправить запрос</a>
+  </div>
 </div>
 
 </div>
@@ -121,116 +158,129 @@ tg.expand();
 const user = tg.initDataUnsafe?.user;
 const name = user?.first_name || "Вы";
 
-document.getElementById("hello").innerText =
-  name + ", что вы хотите сейчас?";
+const params = new URLSearchParams(window.location.search);
+const mode = params.get("mode");
 
 let answersData = {};
 
 const questions = [
-  {
-    key: "main",
-    title: "Что вас беспокоит больше всего?",
-    options: ["Тревога","Страх","Выгорание","Отношения"]
-  },
-  {
-    key: "symptom",
-    title: "Как это проявляется чаще всего?",
-    options: [
-      "Постоянные мысли",
-      "Физическое напряжение",
-      "Избегание ситуаций",
-      "Эмоциональная усталость"
-    ]
-  },
-  {
-    key: "trigger",
-    title: "Когда это усиливается?",
-    options: [
-      "Когда остаюсь один",
-      "Перед важными событиями",
-      "В общении",
-      "Постоянно"
-    ]
-  },
-  {
-    key: "reaction",
-    title: "Как вы обычно реагируете?",
-    options: [
-      "Контролирую",
-      "Избегаю",
-      "Замыкаюсь",
-      "Переосмысливаю"
-    ]
-  }
+  { key:"main", title:"Что беспокоит?", options:["Тревога","Страх","Выгорание","Отношения"] },
+  { key:"symptom", title:"Как проявляется?", options:["Мысли","Напряжение","Избегание","Усталость"] },
+  { key:"trigger", title:"Когда усиливается?", options:["Один","Перед событиями","В общении","Постоянно"] },
+  { key:"reaction", title:"Как реагируете?", options:["Контроль","Избегаю","Замыкаюсь","Анализирую"] }
 ];
 
 let step = 0;
 
-function show(screen) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+function show(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(screen).classList.add('active');
 }
 
-function startTest() {
-  step = 0;
-  answersData = {};
+function startTest(){
+  step=0;
+  answersData={};
   showQuestion();
 }
 
-function showQuestion() {
-  const q = questions[step];
-  document.getElementById("qTitle").innerText = q.title;
+function showQuestion(){
+  const q=questions[step];
+  document.getElementById("qTitle").innerText=q.title;
+  const answers=document.getElementById("answers");
+  answers.innerHTML="";
 
-  const answers = document.getElementById("answers");
-  answers.innerHTML = "";
-
-  q.options.forEach(opt => {
-    const div = document.createElement("div");
-    div.className = "card";
-    div.innerText = opt;
-
-    div.onclick = () => {
-      answersData[q.key] = opt;
+  q.options.forEach(opt=>{
+    const div=document.createElement("div");
+    div.className="card";
+    div.innerText=opt;
+    div.onclick=()=>{
+      answersData[q.key]=opt;
       step++;
-
-      if (step < questions.length) {
-        showQuestion();
-      } else {
-        showResult();
-      }
+      if(step<questions.length) showQuestion();
+      else showResult();
     };
-
     answers.appendChild(div);
   });
 
   show("question");
 }
 
-function showResult() {
-  let text = `
+function showResult(){
+  const text = `
 <b>${name}, по вашим ответам:</b><br><br>
 
-У вас формируется реакция, связанная с <b>${answersData.main}</b>.<br><br>
+Проблема: <b>${answersData.main}</b><br><br>
 
-Что это значит:<br>
-Ваша психика находится в состоянии повышенного напряжения и пытается контролировать ситуацию.<br><br>
+Формируется устойчивая реакция на триггеры (${answersData.trigger})<br><br>
 
-Почему это происходит:<br>
-Формируется устойчивая реакция на триггеры (${answersData.trigger}), которая закрепилась на уровне подсознания.<br><br>
+Это проявляется как:<br>
+• ${answersData.symptom}<br>
+• напряжение<br><br>
 
-Как это влияет:<br>
-• усиливает внутреннее напряжение<br>
-• снижает качество жизни<br>
-• формирует повторяющиеся сценарии<br><br>
+⚠️ Без работы состояние усиливается<br><br>
 
-⚠️ Если это не проработать, состояние будет усиливаться<br><br>
-
-💡 В вашем случае эффективна работа с подсознанием (гипнотерапия)
+💡 Эффективно прорабатывается через гипнотерапию
 `;
 
-  document.getElementById("resultText").innerHTML = text;
+  document.getElementById("resultText").innerHTML=text;
+
+  const message = encodeURIComponent(
+`Добрый день!
+Хочу проработать состояние.
+
+Проблема: ${answersData.main}
+Проявление: ${answersData.symptom}
+Триггер: ${answersData.trigger}
+Реакция: ${answersData.reaction}`
+);
+
+  document.getElementById("ctaBtn").href =
+    `https://t.me/AndreyAstafiev?text=${message}`;
+
   show("result");
 }
+
+let fastProblem="";
+function setFast(val){
+  fastProblem=val;
+  document.getElementById("fastStep2").style.display="block";
+}
+
+document.addEventListener("input",()=>{
+  const text=document.getElementById("fastText")?.value||"";
+  const msg=encodeURIComponent(`Добрый день!
+Хочу записаться.
+
+Проблема: ${fastProblem}
+Описание: ${text}`);
+
+  document.getElementById("fastBtn").href =
+    `https://t.me/AndreyAstafiev?text=${msg}`;
+});
+
+let supType="";
+function setSup(val){
+  supType=val;
+  document.getElementById("supStep2").style.display="block";
+}
+
+document.addEventListener("input",()=>{
+  const text=document.getElementById("supText")?.value||"";
+  const msg=encodeURIComponent(`Добрый день!
+Супервизия.
+
+Тип: ${supType}
+Кейс: ${text}`);
+
+  document.getElementById("supBtn").href =
+    `https://t.me/AndreyAstafiev?text=${msg}`;
+});
+
+if(mode==="diagnostic") startTest();
+else if(mode==="fast") show("fast");
+else if(mode==="supervision") show("supervision");
+else if(mode==="audio") show("audio");
+else startTest();
 </script>
 
 </body>
