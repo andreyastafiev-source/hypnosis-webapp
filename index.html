@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
@@ -18,34 +17,34 @@ button {width:100%;padding:14px;margin-top:10px;border-radius:12px;cursor:pointe
 
 <!-- ===== ДИАГНОСТИКА ===== -->
 <div id="diagnostic" class="card">
-<div class="progress" id="prog"></div>
-<h2 id="question"></h2>
-<div id="answers"></div>
+<div class="progress" id="dProg"></div>
+<h2 id="dQ"></h2>
+<div id="dA"></div>
 </div>
 
-<div id="result" class="card">
+<div id="dResult" class="card">
 <h2>Анализ состояния</h2>
-<p id="resultText"></p>
+<p id="dText"></p>
 
-<button onclick="goAudio()">Снизить состояние</button>
-<button onclick="sendResult()">Записаться на консультацию</button>
+<button onclick="go('audio')">Снизить состояние</button>
+<button onclick="sendDiag()">Записаться на консультацию</button>
 </div>
 
 <!-- ===== АУДИО ===== -->
 <div id="audio" class="card">
-<h2>Снижение тревоги</h2>
+<h2>Снижение тревоги и напряжения</h2>
 
 <p>
-Это аудиопрактика для снижения тревоги и напряжения.
+Это аудиопрактика для работы с состоянием.
 
-Используйте:
-— при тревоге  
+Когда использовать:
+— тревога  
+— перегрузка  
 — перед сном  
-— при перегрузке  
 
-Как использовать:
+Как:
 — в наушниках  
-— без отвлечений  
+— спокойно, без отвлечений  
 </p>
 
 <audio controls>
@@ -55,14 +54,14 @@ button {width:100%;padding:14px;margin-top:10px;border-radius:12px;cursor:pointe
 <button onclick="sendAudio()">Хочу консультацию</button>
 </div>
 
-<!-- ===== FAST ===== -->
+<!-- ===== РАЗБОР ===== -->
 <div id="fast" class="card">
 <div class="progress" id="fProg"></div>
 <h3 id="fQ"></h3>
 <div id="fA"></div>
 </div>
 
-<!-- ===== SUP ===== -->
+<!-- ===== СУПЕРВИЗИЯ ===== -->
 <div id="sup" class="card">
 <div class="progress" id="sProg"></div>
 <h3 id="sQ"></h3>
@@ -70,70 +69,58 @@ button {width:100%;padding:14px;margin-top:10px;border-radius:12px;cursor:pointe
 </div>
 
 <script>
-
 const tg = window.Telegram?.WebApp;
 if(tg) tg.expand();
 
 /* ===== НАВИГАЦИЯ ===== */
-function show(id){
-  document.querySelectorAll('.card').forEach(el=>el.style.display="none");
-  document.getElementById(id).style.display="block";
+function go(id){
+document.querySelectorAll('.card').forEach(el=>el.style.display="none");
+document.getElementById(id).style.display="block";
 }
 
 /* ===== ДИАГНОСТИКА ===== */
+let di=0, score=0;
 
-let step = 0;
-let score = 0;
-
-const questions = [
-"Как часто вы прокручиваете мысли?",
-"Есть ли напряжение в теле?",
-"Сложно остановить внутренний диалог?",
-"Есть тревожные сценарии?",
-"Чувство потери контроля?",
-"Проблемы со сном?",
-"Трудно расслабиться?"
+const dq=[
+"Как часто вы прокручиваете одни и те же мысли?",
+"Есть ли напряжение в теле без причины?",
+"Сложно ли остановить внутренний диалог?",
+"Возникают ли тревожные сценарии?",
+"Есть ли ощущение потери контроля?",
+"Есть ли проблемы со сном?",
+"Сложно ли расслабиться?"
 ];
 
-function startDiagnostic(){
-  step = 0;
-  score = 0;
-  nextQuestion();
+function startD(){
+di=0;score=0;nextD();
 }
 
-function nextQuestion(){
-  prog.innerText = `Вопрос ${step+1} из ${questions.length}`;
-  question.innerText = questions[step];
+function nextD(){
+dProg.innerText=`Вопрос ${di+1} из ${dq.length}`;
+dQ.innerText=dq[di];
 
-  answers.innerHTML = `
-    <button onclick="answer(3)">Почти всегда</button>
-    <button onclick="answer(2)">Часто</button>
-    <button onclick="answer(1)">Иногда</button>
-    <button onclick="answer(0)">Редко</button>
-  `;
+dA.innerHTML=`
+<button onclick="ansD(3)">Почти всегда</button>
+<button onclick="ansD(2)">Часто</button>
+<button onclick="ansD(1)">Иногда</button>
+<button onclick="ansD(0)">Редко</button>`;
 }
 
-function answer(value){
-  score += value;
-  step++;
-
-  if(step < questions.length){
-    nextQuestion();
-  } else {
-    showResult();
-  }
+function ansD(v){
+score+=v;di++;
+if(di<dq.length){nextD();}
+else{finishD();}
 }
 
-function showResult(){
-  show("result");
+function finishD(){
+go("dResult");
 
-  let text = "";
+let text="";
 
-  if(score >= 15){
-    text = `Высокий уровень тревожного паттерна.
+if(score>=15){
+text=`Высокий уровень тревожного паттерна.
 
-Что происходит:
-Реакция закреплена и запускается автоматически.
+Состояние уже закрепилось и запускается автоматически.
 
 Проявления:
 — постоянные мысли  
@@ -141,166 +128,95 @@ function showResult(){
 — потеря контроля  
 
 Рекомендация:
-глубокая работа с состоянием + консультация`;
-  }
-  else if(score >= 8){
-    text = `Средний уровень тревоги.
+работа с подсознательной реакцией + консультация`;
+}
+else if(score>=8){
+text=`Средний уровень тревоги.
 
-Паттерн формируется.
+Паттерн формируется, но ещё гибкий.
 
 Рекомендация:
-состояние можно быстро скорректировать`;
-  }
-  else{
-    text = `Низкий уровень тревоги.
+можно быстро скорректировать состояние`;
+}
+else{
+text=`Низкий уровень тревоги.
 
-Есть отдельные триггеры без закрепления.`;
-  }
-
-  resultText.innerText = text;
+Есть отдельные триггеры, но без закрепления.`;
 }
 
-/* ===== ОТПРАВКА ===== */
+dText.innerText=text;
+}
 
-function sendResult(){
-  if(tg){
-    tg.sendData(JSON.stringify({
-      type:"diagnostic",
-      score:score
-    }));
-
-    setTimeout(()=>{
-      tg.close();
-    },500);
-  }
+function sendDiag(){
+tg.sendData(JSON.stringify({type:"diagnostic",score}));
+setTimeout(()=>tg.close(),500);
 }
 
 /* ===== АУДИО ===== */
-
-function goAudio(){
-  show("audio");
-}
-
 function sendAudio(){
-  if(tg){
-    tg.sendData(JSON.stringify({
-      type:"audio"
-    }));
-
-    setTimeout(()=>{
-      tg.close();
-    },500);
-  }
+tg.sendData(JSON.stringify({type:"audio"}));
+setTimeout(()=>tg.close(),500);
 }
 
 /* ===== FAST ===== */
+let fi=0,fd={};
 
-let fi=0;
-let fastData={};
-
-const fastQ = [
+const fq=[
 {q:"Что беспокоит?",a:["Тревога","Страх","Отношения","Самооценка"]},
 {q:"Как давно?",a:["Недавно","Месяцы","Годы"]},
 {q:"Насколько мешает?",a:["Слабо","Средне","Сильно"]}
 ];
 
-function startFast(){
-  fi=0;
-  fastData={};
-  nextFast();
+function startF(){fi=0;fd={};nextF();}
+
+function nextF(){
+fProg.innerText=`Шаг ${fi+1} из ${fq.length}`;
+fQ.innerText=fq[fi].q;
+fA.innerHTML=fq[fi].a.map(a=>`<button onclick="ansF('${a}')">${a}</button>`).join("");
 }
 
-function nextFast(){
-  fProg.innerText = `Шаг ${fi+1} из ${fastQ.length}`;
-  fQ.innerText = fastQ[fi].q;
-
-  fA.innerHTML = fastQ[fi].a.map(a =>
-    `<button onclick="answerFast('${a}')">${a}</button>`
-  ).join("");
+function ansF(v){
+fd[fq[fi].q]=v;fi++;
+if(fi<fq.length){nextF();}
+else{
+tg.sendData(JSON.stringify({type:"fast",data:fd}));
+setTimeout(()=>tg.close(),500);
 }
-
-function answerFast(val){
-  fastData[fastQ[fi].q] = val;
-  fi++;
-
-  if(fi < fastQ.length){
-    nextFast();
-  } else {
-    tg.sendData(JSON.stringify({
-      type:"fast",
-      data:fastData
-    }));
-
-    setTimeout(()=>tg.close(),500);
-  }
 }
 
 /* ===== SUP ===== */
+let si=0,sd={};
 
-let si=0;
-let supData={};
-
-const supQ = [
+const sq=[
 {q:"Метод?",a:["CBT","Гипноз","Психоанализ"]},
 {q:"Тип кейса?",a:["Тревога","Травма","Поведение"]},
 {q:"Где сложность?",a:["Нет динамики","Сопротивление","Не понимаю"]}
 ];
 
-function startSup(){
-  si=0;
-  supData={};
-  nextSup();
+function startS(){si=0;sd={};nextS();}
+
+function nextS(){
+sProg.innerText=`Шаг ${si+1} из ${sq.length}`;
+sQ.innerText=sq[si].q;
+sA.innerHTML=sq[si].a.map(a=>`<button onclick="ansS('${a}')">${a}</button>`).join("");
 }
 
-function nextSup(){
-  sProg.innerText = `Шаг ${si+1} из ${supQ.length}`;
-  sQ.innerText = supQ[si].q;
-
-  sA.innerHTML = supQ[si].a.map(a =>
-    `<button onclick="answerSup('${a}')">${a}</button>`
-  ).join("");
+function ansS(v){
+sd[sq[si].q]=v;si++;
+if(si<sq.length){nextS();}
+else{
+tg.sendData(JSON.stringify({type:"supervision",data:sd}));
+setTimeout(()=>tg.close(),500);
 }
-
-function answerSup(val){
-  supData[supQ[si].q] = val;
-  si++;
-
-  if(si < supQ.length){
-    nextSup();
-  } else {
-    tg.sendData(JSON.stringify({
-      type:"supervision",
-      data:supData
-    }));
-
-    setTimeout(()=>tg.close(),500);
-  }
 }
 
 /* ===== MODE ===== */
+const m=new URLSearchParams(location.search).get("mode");
 
-const mode = new URLSearchParams(location.search).get("mode");
-
-if(mode === "diagnostic"){
-  show("diagnostic");
-  startDiagnostic();
-}
-else if(mode === "audio"){
-  show("audio");
-}
-else if(mode === "fast"){
-  show("fast");
-  startFast();
-}
-else if(mode === "supervision"){
-  show("sup");
-  startSup();
-}
-else{
-  show("diagnostic");
-  startDiagnostic();
-}
-
+if(m==="diagnostic"){go("diagnostic");startD();}
+if(m==="audio"){go("audio");}
+if(m==="fast"){go("fast");startF();}
+if(m==="supervision"){go("sup");startS();}
 </script>
 
 </body>
