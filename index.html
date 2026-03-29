@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- ВАЖНО -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-body{font-family:sans-serif;background:#f6f7fb;padding:20px;}
-.card{display:none;background:#fff;padding:20px;border-radius:16px;}
-button{width:100%;padding:14px;margin-top:10px;border-radius:12px;}
+body {font-family:sans-serif;background:#f6f7fb;padding:20px;}
+.card {display:none;background:#fff;padding:20px;border-radius:16px;}
+button {width:100%;padding:14px;margin-top:10px;border-radius:12px;cursor:pointer;}
+.progress {color:#666;margin-bottom:10px;}
 </style>
 </head>
 
@@ -18,20 +18,59 @@ button{width:100%;padding:14px;margin-top:10px;border-radius:12px;}
 
 <div id="loading">Загрузка...</div>
 
+<!-- ===== ДИАГНОСТИКА ===== -->
 <div id="diagnostic" class="card">
-<h2 id="q"></h2>
-<div id="a"></div>
+<div class="progress" id="dProg"></div>
+<h2 id="dQ"></h2>
+<div id="dA"></div>
 </div>
 
-<div id="result" class="card">
-<h2>Результат</h2>
-<p id="text"></p>
-<button onclick="sendResult()">Отправить</button>
+<div id="dResult" class="card">
+<h2>Анализ состояния</h2>
+<p id="dText"></p>
+
+<button onclick="showAudio()">Снизить состояние</button>
+<button onclick="sendDiag()">Записаться</button>
+</div>
+
+<!-- ===== АУДИО ===== -->
+<div id="audio" class="card">
+<h2>Снижение тревоги</h2>
+
+<p>
+Используйте:
+— при тревоге  
+— перед сном  
+— при перегрузке  
+</p>
+
+<audio controls>
+<source src="https://github.com/andreyastafiev-source/hypnosis-webapp/raw/main/Hipno_2-001.mp3">
+</audio>
+
+<button onclick="sendAudio()">Записаться</button>
+</div>
+
+<!-- ===== FAST ===== -->
+<div id="fast" class="card">
+<div class="progress" id="fProg"></div>
+<h3 id="fQ"></h3>
+<div id="fA"></div>
+</div>
+
+<!-- ===== SUP ===== -->
+<div id="sup" class="card">
+<div class="progress" id="sProg"></div>
+<h3 id="sQ"></h3>
+<div id="sA"></div>
 </div>
 
 <script>
+
 const tg = window.Telegram.WebApp;
 tg.expand();
+
+/* ===== NAV ===== */
 
 function show(id){
 document.getElementById("loading").style.display="none";
@@ -39,63 +78,196 @@ document.querySelectorAll('.card').forEach(el=>el.style.display="none");
 document.getElementById(id).style.display="block";
 }
 
-/* TEST */
-let i=0,score=0;
+/* ===== ДИАГНОСТИКА ===== */
 
-const qs=[
-"Как часто тревожные мысли?",
-"Есть напряжение?",
-"Сложно расслабиться?",
-"Есть страхи?",
-"Чувство потери контроля?"
+let di=0, score=0;
+
+const dq=[
+"Как часто вы прокручиваете мысли?",
+"Есть ли напряжение в теле?",
+"Сложно остановить мысли?",
+"Есть тревожные сценарии?",
+"Чувство потери контроля?",
+"Проблемы со сном?",
+"Трудно расслабиться?"
 ];
 
-function start(){
-i=0;score=0;next();
+function startD(){
+di=0; score=0;
+nextD();
 }
 
-function next(){
-q.innerText=qs[i];
-a.innerHTML=`
-<button onclick="ans(2)">Часто</button>
-<button onclick="ans(1)">Иногда</button>
-<button onclick="ans(0)">Редко</button>`;
+function nextD(){
+dProg.innerText = `Вопрос ${di+1} из ${dq.length}`;
+dQ.innerText = dq[di];
+
+dA.innerHTML = `
+<button onclick="ansD(3)">Почти всегда</button>
+<button onclick="ansD(2)">Часто</button>
+<button onclick="ansD(1)">Иногда</button>
+<button onclick="ansD(0)">Редко</button>
+`;
 }
 
-function ans(v){
-score+=v;i++;
-if(i<qs.length){next();}
-else{finish();}
+function ansD(v){
+score += v;
+di++;
+
+if(di < dq.length){
+nextD();
+} else {
+finishD();
+}
 }
 
-function finish(){
-show("result");
+function finishD(){
+show("dResult");
 
-text.innerText = "Баллы: "+score;
+let text = "";
+
+if(score >= 15){
+text = `Высокий уровень тревоги.
+
+Сформирован устойчивый паттерн.
+Состояние запускается автоматически.
+
+Рекомендация:
+работа с подсознанием + консультация.`;
+}
+else if(score >= 8){
+text = `Средний уровень тревоги.
+
+Состояние можно скорректировать достаточно быстро.`;
+}
+else{
+text = `Низкий уровень тревоги.
+
+Есть локальные реакции, но без закрепления.`;
 }
 
-/* SEND */
+dText.innerText = text;
+}
 
-function sendResult(){
+function sendDiag(){
 tg.sendData(JSON.stringify({
 type:"diagnostic",
 score:score
 }));
 }
 
-/* MODE + FALLBACK */
+/* ===== AUDIO ===== */
 
-const params = new URLSearchParams(window.location.search);
-let mode = params.get("mode");
-
-if(!mode){
-mode = "diagnostic"; // fallback
+function showAudio(){
+show("audio");
 }
 
+function sendAudio(){
+tg.sendData(JSON.stringify({
+type:"audio"
+}));
+}
+
+/* ===== FAST ===== */
+
+let fi=0;
+let fd={};
+
+const fq=[
+{q:"Что беспокоит?",a:["Тревога","Страх","Отношения","Самооценка"]},
+{q:"Как давно?",a:["Недавно","Месяцы","Годы"]},
+{q:"Насколько мешает?",a:["Слабо","Средне","Сильно"]}
+];
+
+function startF(){
+fi=0; fd={};
+nextF();
+}
+
+function nextF(){
+fProg.innerText = `Шаг ${fi+1} из ${fq.length}`;
+fQ.innerText = fq[fi].q;
+
+fA.innerHTML = fq[fi].a.map(a =>
+`<button onclick="ansF('${a}')">${a}</button>`
+).join("");
+}
+
+function ansF(v){
+fd[fq[fi].q] = v;
+fi++;
+
+if(fi < fq.length){
+nextF();
+} else {
+tg.sendData(JSON.stringify({
+type:"fast",
+data:fd
+}));
+}
+}
+
+/* ===== SUP ===== */
+
+let si=0;
+let sd={};
+
+const sq=[
+{q:"Метод?",a:["CBT","Гипноз","Психоанализ"]},
+{q:"Тип кейса?",a:["Тревога","Травма","Поведение"]},
+{q:"Где сложность?",a:["Нет динамики","Сопротивление","Не понимаю"]}
+];
+
+function startS(){
+si=0; sd={};
+nextS();
+}
+
+function nextS(){
+sProg.innerText = `Шаг ${si+1} из ${sq.length}`;
+sQ.innerText = sq[si].q;
+
+sA.innerHTML = sq[si].a.map(a =>
+`<button onclick="ansS('${a}')">${a}</button>`
+).join("");
+}
+
+function ansS(v){
+sd[sq[si].q] = v;
+si++;
+
+if(si < sq.length){
+nextS();
+} else {
+tg.sendData(JSON.stringify({
+type:"supervision",
+data:sd
+}));
+}
+}
+
+/* ===== MODE ===== */
+
+const mode = new URLSearchParams(location.search).get("mode");
+
 setTimeout(()=>{
-if(mode==="diagnostic"){
+if(mode === "diagnostic"){
 show("diagnostic");
-start();
+startD();
+}
+else if(mode === "audio"){
+show("audio");
+}
+else if(mode === "fast"){
+show("fast");
+startF();
+}
+else if(mode === "supervision"){
+show("sup");
+startS();
+}
+else{
+show("diagnostic");
+startD();
 }
 },100);
 
