@@ -1,95 +1,306 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+body {font-family:sans-serif;background:#f6f7fb;padding:20px;}
+.card {display:none;background:#fff;padding:20px;border-radius:16px;}
+button {width:100%;padding:14px;margin-top:10px;border-radius:12px;cursor:pointer;}
+.progress {color:#666;margin-bottom:10px;}
+</style>
 </head>
 
 <body>
 
-<h2 id="title">Загрузка...</h2>
-<div id="content"></div>
+<!-- ===== ДИАГНОСТИКА ===== -->
+<div id="diagnostic" class="card">
+<div class="progress" id="prog"></div>
+<h2 id="question"></h2>
+<div id="answers"></div>
+</div>
+
+<div id="result" class="card">
+<h2>Анализ состояния</h2>
+<p id="resultText"></p>
+
+<button onclick="goAudio()">Снизить состояние</button>
+<button onclick="sendResult()">Записаться на консультацию</button>
+</div>
+
+<!-- ===== АУДИО ===== -->
+<div id="audio" class="card">
+<h2>Снижение тревоги</h2>
+
+<p>
+Это аудиопрактика для снижения тревоги и напряжения.
+
+Используйте:
+— при тревоге  
+— перед сном  
+— при перегрузке  
+
+Как использовать:
+— в наушниках  
+— без отвлечений  
+</p>
+
+<audio controls>
+<source src="https://github.com/andreyastafiev-source/hypnosis-webapp/raw/main/Hipno_2-001.mp3">
+</audio>
+
+<button onclick="sendAudio()">Хочу консультацию</button>
+</div>
+
+<!-- ===== FAST ===== -->
+<div id="fast" class="card">
+<div class="progress" id="fProg"></div>
+<h3 id="fQ"></h3>
+<div id="fA"></div>
+</div>
+
+<!-- ===== SUP ===== -->
+<div id="sup" class="card">
+<div class="progress" id="sProg"></div>
+<h3 id="sQ"></h3>
+<div id="sA"></div>
+</div>
 
 <script>
+
 const tg = window.Telegram?.WebApp;
 if(tg) tg.expand();
 
-/* --- определяем режим --- */
-let mode = new URLSearchParams(location.search).get("mode");
-
-// fallback
-if(!mode){
-  mode = "diagnostic";
+/* ===== НАВИГАЦИЯ ===== */
+function show(id){
+  document.querySelectorAll('.card').forEach(el=>el.style.display="none");
+  document.getElementById(id).style.display="block";
 }
 
-/* --- простой экран --- */
-function show(text){
-  document.getElementById("title").innerText = text;
-}
+/* ===== ДИАГНОСТИКА ===== */
 
-/* --- диагностика --- */
-let score = 0;
 let step = 0;
+let score = 0;
 
 const questions = [
-"Часто ли тревожные мысли?",
-"Есть ли напряжение?",
-"Сложно расслабиться?"
+"Как часто вы прокручиваете мысли?",
+"Есть ли напряжение в теле?",
+"Сложно остановить внутренний диалог?",
+"Есть тревожные сценарии?",
+"Чувство потери контроля?",
+"Проблемы со сном?",
+"Трудно расслабиться?"
 ];
 
-function startTest(){
-  next();
+function startDiagnostic(){
+  step = 0;
+  score = 0;
+  nextQuestion();
 }
 
-function next(){
-  if(step >= questions.length){
-    showResult();
-    return;
-  }
+function nextQuestion(){
+  prog.innerText = `Вопрос ${step+1} из ${questions.length}`;
+  question.innerText = questions[step];
 
-  document.getElementById("title").innerText =
-    `Вопрос ${step+1} из ${questions.length}`;
-
-  document.getElementById("content").innerHTML = `
-    <p>${questions[step]}</p>
+  answers.innerHTML = `
+    <button onclick="answer(3)">Почти всегда</button>
     <button onclick="answer(2)">Часто</button>
     <button onclick="answer(1)">Иногда</button>
     <button onclick="answer(0)">Редко</button>
   `;
 }
 
-function answer(v){
-  score += v;
+function answer(value){
+  score += value;
   step++;
-  next();
+
+  if(step < questions.length){
+    nextQuestion();
+  } else {
+    showResult();
+  }
 }
 
 function showResult(){
-  show("Результат");
+  show("result");
 
-  document.getElementById("content").innerHTML = `
-    <p>Баллы: ${score}</p>
-    <button onclick="send()">Отправить</button>
-  `;
+  let text = "";
+
+  if(score >= 15){
+    text = `Высокий уровень тревожного паттерна.
+
+Что происходит:
+Реакция закреплена и запускается автоматически.
+
+Проявления:
+— постоянные мысли  
+— напряжение  
+— потеря контроля  
+
+Рекомендация:
+глубокая работа с состоянием + консультация`;
+  }
+  else if(score >= 8){
+    text = `Средний уровень тревоги.
+
+Паттерн формируется.
+
+Рекомендация:
+состояние можно быстро скорректировать`;
+  }
+  else{
+    text = `Низкий уровень тревоги.
+
+Есть отдельные триггеры без закрепления.`;
+  }
+
+  resultText.innerText = text;
 }
 
-function send(){
+/* ===== ОТПРАВКА ===== */
+
+function sendResult(){
   if(tg){
     tg.sendData(JSON.stringify({
       type:"diagnostic",
       score:score
     }));
-  } else {
-    alert("НЕ WebApp");
+
+    setTimeout(()=>{
+      tg.close();
+    },500);
   }
 }
 
-/* --- запуск --- */
-if(mode === "diagnostic"){
-  startTest();
-} else {
-  show("Режим: " + mode);
+/* ===== АУДИО ===== */
+
+function goAudio(){
+  show("audio");
 }
+
+function sendAudio(){
+  if(tg){
+    tg.sendData(JSON.stringify({
+      type:"audio"
+    }));
+
+    setTimeout(()=>{
+      tg.close();
+    },500);
+  }
+}
+
+/* ===== FAST ===== */
+
+let fi=0;
+let fastData={};
+
+const fastQ = [
+{q:"Что беспокоит?",a:["Тревога","Страх","Отношения","Самооценка"]},
+{q:"Как давно?",a:["Недавно","Месяцы","Годы"]},
+{q:"Насколько мешает?",a:["Слабо","Средне","Сильно"]}
+];
+
+function startFast(){
+  fi=0;
+  fastData={};
+  nextFast();
+}
+
+function nextFast(){
+  fProg.innerText = `Шаг ${fi+1} из ${fastQ.length}`;
+  fQ.innerText = fastQ[fi].q;
+
+  fA.innerHTML = fastQ[fi].a.map(a =>
+    `<button onclick="answerFast('${a}')">${a}</button>`
+  ).join("");
+}
+
+function answerFast(val){
+  fastData[fastQ[fi].q] = val;
+  fi++;
+
+  if(fi < fastQ.length){
+    nextFast();
+  } else {
+    tg.sendData(JSON.stringify({
+      type:"fast",
+      data:fastData
+    }));
+
+    setTimeout(()=>tg.close(),500);
+  }
+}
+
+/* ===== SUP ===== */
+
+let si=0;
+let supData={};
+
+const supQ = [
+{q:"Метод?",a:["CBT","Гипноз","Психоанализ"]},
+{q:"Тип кейса?",a:["Тревога","Травма","Поведение"]},
+{q:"Где сложность?",a:["Нет динамики","Сопротивление","Не понимаю"]}
+];
+
+function startSup(){
+  si=0;
+  supData={};
+  nextSup();
+}
+
+function nextSup(){
+  sProg.innerText = `Шаг ${si+1} из ${supQ.length}`;
+  sQ.innerText = supQ[si].q;
+
+  sA.innerHTML = supQ[si].a.map(a =>
+    `<button onclick="answerSup('${a}')">${a}</button>`
+  ).join("");
+}
+
+function answerSup(val){
+  supData[supQ[si].q] = val;
+  si++;
+
+  if(si < supQ.length){
+    nextSup();
+  } else {
+    tg.sendData(JSON.stringify({
+      type:"supervision",
+      data:supData
+    }));
+
+    setTimeout(()=>tg.close(),500);
+  }
+}
+
+/* ===== MODE ===== */
+
+const mode = new URLSearchParams(location.search).get("mode");
+
+if(mode === "diagnostic"){
+  show("diagnostic");
+  startDiagnostic();
+}
+else if(mode === "audio"){
+  show("audio");
+}
+else if(mode === "fast"){
+  show("fast");
+  startFast();
+}
+else if(mode === "supervision"){
+  show("sup");
+  startSup();
+}
+else{
+  show("diagnostic");
+  startDiagnostic();
+}
+
 </script>
 
 </body>
