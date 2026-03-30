@@ -1,122 +1,60 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>Анализ состояния</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+from flask import Flask, request
+import requests
+import json
 
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+TOKEN = "8534372397:AAFVT0iyND6WpLcsOvFJynA50e9GWieaaVI"
+URL = f"https://api.telegram.org/bot{TOKEN}/"
 
-<style>
-body {
-    font-family: Arial;
-    padding: 20px;
-    background: #0f172a;
-    color: white;
-}
+app = Flask(__name__)
 
-.card {
-    background: #1e293b;
-    padding: 20px;
-    border-radius: 12px;
-}
 
-button {
-    width: 100%;
-    padding: 15px;
-    margin-top: 10px;
-    border: none;
-    border-radius: 10px;
-    background: #3b82f6;
-    color: white;
-    font-size: 16px;
-}
+def send_text(chat_id, text):
+    requests.post(URL + "sendMessage", json={
+        "chat_id": chat_id,
+        "text": text
+    })
 
-.progress {
-    margin-bottom: 10px;
-    color: #94a3b8;
-}
-</style>
-</head>
 
-<body>
-
-<div class="card">
-    <div id="progress" class="progress"></div>
-    <div id="question"></div>
-    <div id="answers"></div>
-</div>
-
-<script>
-const tg = window.Telegram.WebApp;
-tg.expand();
-
-const questions = [
-    {q: "Чувствуете тревогу?", a: 2},
-    {q: "Есть напряжение в теле?", a: 2},
-    {q: "Трудно расслабиться?", a: 2},
-    {q: "Много мыслей в голове?", a: 2},
-    {q: "Есть страх или беспокойство?", a: 2}
-];
-
-let step = 0;
-let score = 0;
-
-function render() {
-    document.getElementById("progress").innerText =
-        `Вопрос ${step + 1} из ${questions.length}`;
-
-    document.getElementById("question").innerText =
-        questions[step].q;
-
-    document.getElementById("answers").innerHTML = `
-        <button onclick="answer(2)">Да</button>
-        <button onclick="answer(1)">Иногда</button>
-        <button onclick="answer(0)">Нет</button>
-    `;
-}
-
-function answer(val) {
-    score += val;
-    step++;
-
-    if (step >= questions.length) {
-        finish();
-    } else {
-        render();
-    }
-}
-
-function finish() {
-    let result = "";
-
-    if (score >= 8) {
-        result = "Высокий уровень тревоги";
-    } else if (score >= 4) {
-        result = "Средний уровень";
-    } else {
-        result = "Низкий уровень";
+def send_buttons(chat_id):
+    keyboard = {
+        "inline_keyboard": [
+            [{
+                "text": "🚀 Начать анализ",
+                "web_app": {
+                    "url": "https://andreyastafiev-source.github.io/hypnosis-webapp/"
+                }
+            }]
+        ]
     }
 
-    document.getElementById("question").innerHTML =
-        `<h3>${result}</h3><p>Баллы: ${score}</p>`;
+    requests.post(URL + "sendMessage", json={
+        "chat_id": chat_id,
+        "text": "Нажмите кнопку ниже 👇",
+        "reply_markup": keyboard
+    })
 
-    document.getElementById("answers").innerHTML = `
-        <button onclick="sendResult()">Отправить результат</button>
-    `;
-}
 
-function sendResult() {
-    tg.sendData(JSON.stringify({
-        type: "diagnostic",
-        score: score
-    }));
+@app.route("/", methods=["GET"])
+def home():
+    return "Bot is running"
 
-    tg.close();
-}
 
-render();
-</script>
+@app.route("/", methods=["POST"])
+def webhook():
+    data = request.json
+    print("UPDATE:", data)
 
-</body>
-</html>
+    if "message" in data:
+        msg = data["message"]
+        chat_id = msg["chat"]["id"]
+
+        # 👉 ОБРАБОТКА WebApp
+        if "web_app_data" in msg:
+            raw = msg["web_app_data"]["data"]
+
+            try:
+                parsed = json.loads(raw)
+            except:
+                parsed = {"raw": raw}
+
+            text = f"""🧠
