@@ -9,7 +9,7 @@
 <style>
 body {font-family:sans-serif;background:#f6f7fb;padding:20px;}
 .card {display:none;background:#fff;padding:20px;border-radius:16px;}
-button {width:100%;padding:14px;margin-top:10px;border-radius:12px;cursor:pointer;}
+button {width:100%;padding:14px;margin-top:10px;border-radius:12px;}
 .progress {color:#666;margin-bottom:10px;}
 </style>
 </head>
@@ -18,17 +18,17 @@ button {width:100%;padding:14px;margin-top:10px;border-radius:12px;cursor:pointe
 
 <!-- ===== ДИАГНОСТИКА ===== -->
 <div id="diagnostic" class="card">
-<div class="progress" id="dProg"></div>
-<h2 id="dQ"></h2>
-<div id="dA"></div>
+<div class="progress" id="prog"></div>
+<h2 id="question"></h2>
+<div id="answers"></div>
 </div>
 
-<div id="dResult" class="card">
+<div id="result" class="card">
 <h2>Анализ состояния</h2>
-<p id="dText"></p>
+<p id="resultText"></p>
 
 <button onclick="go('audio')">Снизить состояние</button>
-<button onclick="sendDiag()">Записаться на консультацию</button>
+<button onclick="sendResult()">Записаться на консультацию</button>
 </div>
 
 <!-- ===== АУДИО ===== -->
@@ -66,7 +66,6 @@ button {width:100%;padding:14px;margin-top:10px;border-radius:12px;cursor:pointe
 <script>
 
 const tg = window.Telegram?.WebApp;
-if(tg) tg.expand();
 
 /* ===== НАВИГАЦИЯ ===== */
 function go(id){
@@ -74,96 +73,81 @@ document.querySelectorAll('.card').forEach(el=>el.style.display="none");
 document.getElementById(id).style.display="block";
 }
 
-/* ===== ДИАГНОСТИКА ===== */
-let di=0, score=0;
+/* ===== ОТПРАВКА БЕЗ СЕРВЕРА ===== */
+function sendToChat(text){
+if(tg){
+tg.sendData(text);
+setTimeout(()=>tg.close(),300);
+} else {
+alert(text);
+}
+}
 
-const dq=[
+/* ===== ДИАГНОСТИКА ===== */
+let step=0, score=0;
+
+const q=[
 "Как часто вы прокручиваете мысли?",
-"Есть ли напряжение в теле?",
-"Сложно остановить мысли?",
+"Есть ли напряжение?",
+"Сложно расслабиться?",
 "Есть тревожные сценарии?",
-"Чувство потери контроля?",
-"Проблемы со сном?",
-"Трудно расслабиться?"
+"Чувство потери контроля?"
 ];
 
-function startD(){
-di=0;score=0;nextD();
+function start(){
+step=0;score=0;next();
 }
 
-function nextD(){
-dProg.innerText=`Вопрос ${di+1} из ${dq.length}`;
-dQ.innerText=dq[di];
+function next(){
+prog.innerText=`Вопрос ${step+1} из ${q.length}`;
+question.innerText=q[step];
 
-dA.innerHTML=`
-<button onclick="ansD(3)">Почти всегда</button>
-<button onclick="ansD(2)">Часто</button>
-<button onclick="ansD(1)">Иногда</button>
-<button onclick="ansD(0)">Редко</button>`;
+answers.innerHTML=`
+<button onclick="ans(3)">Почти всегда</button>
+<button onclick="ans(2)">Часто</button>
+<button onclick="ans(1)">Иногда</button>
+<button onclick="ans(0)">Редко</button>`;
 }
 
-function ansD(v){
-score+=v;di++;
-if(di<dq.length){nextD();}
-else{finishD();}
+function ans(v){
+score+=v;step++;
+if(step<q.length){next();}
+else{finish();}
 }
 
-function finishD(){
-go("dResult");
+function finish(){
+go("result");
 
 let text="";
-
-if(score>=15){
-text=`Высокий уровень тревоги.
-
-Реакция закреплена и запускается автоматически.
-Рекомендуется работа с состоянием и консультация.`;
+if(score>=10){
+text="Высокий уровень тревоги. Рекомендуется работа со специалистом.";
 }
-else if(score>=8){
-text=`Средний уровень тревоги.
-
-Состояние можно скорректировать достаточно быстро.`;
+else if(score>=5){
+text="Средний уровень тревоги. Можно скорректировать.";
 }
 else{
-text=`Низкий уровень тревоги.
-
-Есть локальные реакции без закрепления.`;
+text="Низкий уровень тревоги.";
 }
 
-dText.innerText=text;
+resultText.innerText=text;
 }
 
 /* ===== ОТПРАВКА ===== */
-
-function sendDiag(){
-sendData({type:"diagnostic",score});
+function sendResult(){
+sendToChat(`🧠 Заявка\nБаллы: ${score}`);
 }
 
 function sendAudio(){
-sendData({type:"audio"});
-}
-
-function sendData(payload){
-if(tg){
-tg.sendData(JSON.stringify(payload));
-
-// важно — задержка!
-setTimeout(()=>{
-tg.close();
-},4000);
-
-} else {
-alert("НЕ WebApp");
-}
+sendToChat("🎧 Хочу консультацию после практики");
 }
 
 /* ===== FAST ===== */
 let fi=0,fd={};
 
 const fq=[
-{q:"Что беспокоит?",a:["Тревога","Страх","Отношения","Самооценка"]},
-{q:"Как давно?",a:["Недавно","Месяцы","Годы"]},
-{q:"Насколько мешает?",a:["Слабо","Средне","Сильно"]}
+{q:"Что беспокоит?",a:["Тревога","Страх","Отношения"]},
+{q:"Как давно?",a:["Недавно","Давно"]},
+{q:"Насколько мешает?",a:["Слабо","Сильно"]}
 ];
 
 function startF(){fi=0;fd={};nextF();}
@@ -178,7 +162,7 @@ function ansF(v){
 fd[fq[fi].q]=v;fi++;
 if(fi<fq.length){nextF();}
 else{
-sendData({type:"fast",data:fd});
+sendToChat(`⚡ Разбор\n${JSON.stringify(fd)}`);
 }
 }
 
@@ -186,9 +170,9 @@ sendData({type:"fast",data:fd});
 let si=0,sd={};
 
 const sq=[
-{q:"Метод?",a:["CBT","Гипноз","Психоанализ"]},
-{q:"Тип кейса?",a:["Тревога","Травма","Поведение"]},
-{q:"Где сложность?",a:["Нет динамики","Сопротивление","Не понимаю"]}
+{q:"Метод?",a:["CBT","Гипноз"]},
+{q:"Тип кейса?",a:["Тревога","Травма"]},
+{q:"Где сложность?",a:["Нет динамики","Не понимаю"]}
 ];
 
 function startS(){si=0;sd={};nextS();}
@@ -203,14 +187,14 @@ function ansS(v){
 sd[sq[si].q]=v;si++;
 if(si<sq.length){nextS();}
 else{
-sendData({type:"supervision",data:sd});
+sendToChat(`👨‍⚕️ Супервизия\n${JSON.stringify(sd)}`);
 }
 }
 
 /* ===== MODE ===== */
 const m=new URLSearchParams(location.search).get("mode");
 
-if(m==="diagnostic"){go("diagnostic");startD();}
+if(m==="diagnostic"){go("diagnostic");start();}
 if(m==="audio"){go("audio");}
 if(m==="fast"){go("fast");startF();}
 if(m==="supervision"){go("sup");startS();}
