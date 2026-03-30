@@ -1,60 +1,94 @@
-from flask import Flask, request
-import requests
-import json
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-TOKEN = "8534372397:AAFVT0iyND6WpLcsOvFJynA50e9GWieaaVI"
-URL = f"https://api.telegram.org/bot{TOKEN}/"
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-app = Flask(__name__)
+<style>
+body {
+    background: #0f172a;
+    color: white;
+    font-family: Arial;
+    padding: 20px;
+}
 
+button {
+    width: 100%;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 10px;
+    border: none;
+    background: #3b82f6;
+    color: white;
+}
+</style>
+</head>
 
-def send_text(chat_id, text):
-    requests.post(URL + "sendMessage", json={
-        "chat_id": chat_id,
-        "text": text
-    })
+<body>
 
+<h2 id="q"></h2>
+<div id="answers"></div>
 
-def send_buttons(chat_id):
-    keyboard = {
-        "inline_keyboard": [
-            [{
-                "text": "🚀 Начать анализ",
-                "web_app": {
-                    "url": "https://andreyastafiev-source.github.io/hypnosis-webapp/"
-                }
-            }]
-        ]
+<script>
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
+
+const questions = [
+    "Чувствуешь тревогу?",
+    "Есть напряжение?",
+    "Трудно расслабиться?",
+    "Много мыслей?",
+    "Есть беспокойство?"
+];
+
+let step = 0;
+let score = 0;
+
+function render() {
+    document.getElementById("q").innerText =
+        `${step + 1}/${questions.length} — ${questions[step]}`;
+
+    document.getElementById("answers").innerHTML = `
+        <button onclick="answer(2)">Да</button>
+        <button onclick="answer(1)">Иногда</button>
+        <button onclick="answer(0)">Нет</button>
+    `;
+}
+
+function answer(val) {
+    score += val;
+    step++;
+
+    if (step >= questions.length) {
+        finish();
+    } else {
+        render();
     }
+}
 
-    requests.post(URL + "sendMessage", json={
-        "chat_id": chat_id,
-        "text": "Нажмите кнопку ниже 👇",
-        "reply_markup": keyboard
-    })
+function finish() {
+    document.getElementById("q").innerText =
+        `Готово. Баллы: ${score}`;
 
+    document.getElementById("answers").innerHTML = `
+        <button onclick="send()">Отправить</button>
+    `;
+}
 
-@app.route("/", methods=["GET"])
-def home():
-    return "Bot is running"
+function send() {
+    tg.sendData(JSON.stringify({
+        type: "diagnostic",
+        score: score
+    }));
 
+    setTimeout(() => tg.close(), 300);
+}
 
-@app.route("/", methods=["POST"])
-def webhook():
-    data = request.json
-    print("UPDATE:", data)
+render();
+</script>
 
-    if "message" in data:
-        msg = data["message"]
-        chat_id = msg["chat"]["id"]
-
-        # 👉 ОБРАБОТКА WebApp
-        if "web_app_data" in msg:
-            raw = msg["web_app_data"]["data"]
-
-            try:
-                parsed = json.loads(raw)
-            except:
-                parsed = {"raw": raw}
-
-            text = f"""🧠
+</body>
+</html>
